@@ -1,0 +1,6 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>¡Hola, {{ nombre }}!</h1>
+    <p>Has logrado entrar. Esta es la página protegida.</p>
+    <a href="/" action="/logout" method="POST">Cerrar sesión</a>
+{% endblock %}
