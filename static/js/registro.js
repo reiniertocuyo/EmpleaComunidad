@@ -52,7 +52,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Si detectamos cualquier error, detenemos el envío
         if (hayErrores) {
-            evento.preventDefault(); // IMPORTANTE: Evita que el formulario se envíe a Flask
+            evento.preventDefault();
+        } else {
+            evento.preventDefault(); // Frenamos el envío tradicional
+            
+            const formData = new FormData(formulario);
+            
+            fetch('/registro', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    alert("❌ " + data.message); // El mensaje emergente
+                }
+            })
+            .catch(error => alert("Error en el servidor"));
         }
+
+
+
+
     });
 });
