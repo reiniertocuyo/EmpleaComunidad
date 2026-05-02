@@ -1,5 +1,5 @@
 import sqlite3
-import uuid # Para generar llaves aleatorias únicas
+import uuid
 
 DATABASE_NAME = "database.db"
 
@@ -9,10 +9,12 @@ def conectar():
     return conn
 
 def inicializar_db():
+    # ACTUALIZADO: Añadimos la columna 'email', también UNIQUE
     sql = '''
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE, 
         password TEXT NOT NULL,
         token TEXT
     )
@@ -22,15 +24,23 @@ def inicializar_db():
     conn.commit()
     conn.close()
 
-def registrar_usuario(nombre, password):
+# ACTUALIZADO: Acepta 'email'
+def registrar_usuario(nombre, email, password):
     try:
         conn = conectar()
-        conn.execute("INSERT INTO usuarios (nombre, password) VALUES (?, ?)", (nombre, password))
+        # ACTUALIZADO: Incluimos email en el INSERT
+        conn.execute(
+            "INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)", 
+            (nombre, email, password)
+        )
         conn.commit()
         conn.close()
         return True
     except sqlite3.IntegrityError:
+        # Esto ocurre si el nombre O el email ya existen
+        conn.close()
         return False
+
 
 def verificar_usuario(nombre, password):
     conn = conectar()
