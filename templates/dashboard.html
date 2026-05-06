@@ -1,6 +1,28 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>¡Hola, {{ nombre }}!</h1>
-    <p>Has logrado entrar. Esta es la página protegida.</p>
-    <a href="{{ url_for('logout') }}" action="/logout" method="POST">Cerrar sesión</a>
+    <h1>Panel de Perfil</h1>
+    
+    <div>
+        <p><strong>Username:</strong> @{{ u.nombre }}</p>
+        <p><strong>Nombre Completo:</strong> {{ u.nombre_completo or 'No especificado' }}</p>
+        <p><strong>Edad:</strong> {{ edad }} años</p>
+        <p><strong>Género:</strong> {{ u.genero or 'No especificado' }}</p>
+        
+        <hr>
+        
+        <h3>Descripción Profesional</h3>
+        <p>{{ u.descripcion or 'Sin descripción todavía...' }}</p>
+        
+        <h3>Experiencia</h3>
+        <p>{{ u.experiencia or 'No se ha agregado experiencia.' }}</p>
+        
+        <h3>Educación</h3>
+        <p>{{ u.educacion or 'No se ha agregado educación.' }}</p>
+    </div>
+
+    <br>
+    <a href="{{ url_for('editar_perfil') }}" style="color: red; ">Editar Perfil</a>
+    
+    <br><br>
+    <a href="{{ url_for('logout') }}" style="color: red;">Cerrar sesión</a>
 {% endblock %}

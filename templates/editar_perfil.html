@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<form id="formPerfil">
+    <div>
+        <label>Nombre y Apellido:</label><br>
+        <input type="text" id="nombre_completo" value="{{ u.nombre_completo or '' }}" placeholder="Nombre y Apellido">
+    </div><br>
+
+    <div>
+        <label>Descripción profesional:</label><br>
+        <textarea id="descripcion" placeholder="Breve descripción">{{ u.descripcion or '' }}</textarea>
+    </div><br>
+
+    <div>
+        <label>Experiencia laboral:</label><br>
+        <textarea id="experiencia" placeholder="Trabajos anteriores">{{ u.experiencia or '' }}</textarea>
+    </div><br>
+
+    <div>
+        <label>Educación:</label><br>
+        <textarea id="educacion" placeholder="Estudios realizados">{{ u.educacion or '' }}</textarea>
+    </div><br>
+    
+    <div>
+        <label>Género:</label><br>
+        <select id="genero">
+            <option value="Masculino" {{ 'selected' if u.genero == 'Masculino' }}>Masculino</option>
+            <option value="Femenino" {{ 'selected' if u.genero == 'Femenino' }}>Femenino</option>
+            <option value="Otro" {{ 'selected' if u.genero == 'Otro' }}>Otro</option>
+        </select>
+    </div><br>
+    
+    <div>
+        <label>Fecha de nacimiento:</label><br>
+        <input type="date" id="fecha_nacimiento" value="{{ u.fecha_nacimiento or '' }}">
+    </div><br>
+    
+    <button type="submit">Guardar Cambios</button>
+</form>
+
+<script>
+document.getElementById('formPerfil').onsubmit = async (e) => {
+    e.preventDefault();
+    
+    const datos = {
+        nombre_completo: document.getElementById('nombre_completo').value,
+        descripcion: document.getElementById('descripcion').value,
+        experiencia: document.getElementById('experiencia').value,
+        educacion: document.getElementById('educacion').value,
+        genero: document.getElementById('genero').value,
+        fecha_nacimiento: document.getElementById('fecha_nacimiento').value
+    };
+
+    // 1. Enviamos los datos
+    const resp = await fetch('/perfil/editar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(datos)
+    });
+    
+    // 2. Convertimos la respuesta a JSON
+    const res = await resp.json();
+
+    // 3. Verificamos si Flask nos devolvió "success"
+    if(res.status === "success") {
+        alert("¡Perfil actualizado con éxito!");
+        // 4. Redirigimos al Dashboard para ver los cambios aplicados
+        window.location.href = "/dashboard"; 
+    } else {
+        // Si algo falló (ej. error 500), mostramos el error
+        alert("Error: " + res.message);
+    }
+};
+</script>
+
+
+
+{% endblock %}

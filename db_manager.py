@@ -8,21 +8,63 @@ def conectar():
     conn.row_factory = sqlite3.Row
     return conn
 
+# --- EN db_manager.py ---
+
 def inicializar_db():
-    # ACTUALIZADO: Añadimos la columna 'email', también UNIQUE
+    # Mantenemos los nombres pre-existentes y añadimos los nuevos
     sql = '''
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         email TEXT NOT NULL UNIQUE, 
         password TEXT NOT NULL,
-        token TEXT
+        token TEXT,
+        nombre_completo TEXT,
+        descripcion TEXT,
+        experiencia TEXT,
+        educacion TEXT,
+        genero TEXT,
+        fecha_nacimiento TEXT
     )
     '''
     conn = conectar()
     conn.execute(sql)
     conn.commit()
     conn.close()
+
+
+def actualizar_perfil(usuario_id, datos):
+    """
+    'datos' es un diccionario con las llaves: 
+    nombre_completo, descripcion, experiencia, educacion, genero, fecha_nacimiento
+    """
+    try:
+        conn = conectar()
+        conn.execute('''
+            UPDATE usuarios SET 
+                nombre_completo = ?, 
+                descripcion = ?, 
+                experiencia = ?, 
+                educacion = ?, 
+                genero = ?, 
+                fecha_nacimiento = ?
+            WHERE id = ?
+        ''', (
+            datos['nombre_completo'], 
+            datos['descripcion'], 
+            datos['experiencia'], 
+            datos['educacion'], 
+            datos['genero'], 
+            datos['fecha_nacimiento'], 
+            usuario_id
+        ))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error al actualizar: {e}")
+        return False
+
 
 # ACTUALIZADO: Acepta 'email'
 def registrar_usuario(nombre, email, password):

@@ -1,80 +1,65 @@
-// Esperamos a que todo el HTML cargue
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.getElementById('formRegistro');
-    
-    // Obtenemos referencias a los inputs
+    const usuarioInput = document.getElementById('usuario');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirm_password');
 
-    // Obtenemos referencias a los lugares donde mostraremos errores
-    const errorEmail = document.getElementById('errorEmail');
-    const errorPassword = document.getElementById('errorPassword');
+    // --- MEJORA DE UX: LIMPIEZA EN TIEMPO REAL ---
+    usuarioInput.addEventListener('input', () => {
+        // Convierte a minúscula y elimina cualquier cosa que no sea a-z o 0-9
+        usuarioInput.value = usuarioInput.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    });
 
-    // Función para validar formato de email (Expresión Regular estándar)
+    // Función de validación para el submit
     const validarFormatoEmail = (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
 
-    // Escuchamos cuando se intente enviar el formulario
     formulario.addEventListener('submit', (evento) => {
         let hayErrores = false;
 
-        // Limpiamos errores previos
-        errorEmail.textContent = '';
-        errorPassword.textContent = '';
-        emailInput.style.borderColor = '';
-        passwordInput.style.borderColor = '';
-        confirmPasswordInput.style.borderColor = '';
+        // Limpiar errores previos
+        document.getElementById('errorUsuario').textContent = '';
+        document.getElementById('errorEmail').textContent = '';
+        document.getElementById('errorPassword').textContent = '';
 
-        // --- VALIDACION DE EMAIL ---
+        // Validar Usuario (por si acaso pegan texto con símbolos)
+        if (usuarioInput.value.length < 3) {
+            document.getElementById('errorUsuario').textContent = 'El usuario es muy corto.';
+            hayErrores = true;
+        }
+
+        // Validar Email
         if (!validarFormatoEmail(emailInput.value)) {
-            errorEmail.textContent = 'Por favor, introduce un correo electrónico válido.';
-            emailInput.style.borderColor = 'red';
+            document.getElementById('errorEmail').textContent = 'Email no válido.';
             hayErrores = true;
         }
 
-        // --- VALIDACION DE CONTRASEÑA ---
-        // 1. Validar longitud (ej: minimo 6 caracteres)
+        // Validar Password
         if (passwordInput.value.length < 6) {
-            errorPassword.textContent = 'La contraseña debe tener al menos 6 caracteres.';
-            passwordInput.style.borderColor = 'red';
+            document.getElementById('errorPassword').textContent = 'Mínimo 6 caracteres.';
             hayErrores = true;
-        } 
-        // 2. Validar que coincidan (solo si la longitud es correcta para no acumular errores)
-        else if (passwordInput.value !== confirmPasswordInput.value) {
-            errorPassword.textContent = 'Las contraseñas no coinciden.';
-            passwordInput.style.borderColor = 'red';
-            confirmPasswordInput.style.borderColor = 'red';
+        } else if (passwordInput.value !== confirmPasswordInput.value) {
+            document.getElementById('errorPassword').textContent = 'No coinciden.';
             hayErrores = true;
         }
 
-        // Si detectamos cualquier error, detenemos el envío
         if (hayErrores) {
             evento.preventDefault();
         } else {
-            evento.preventDefault(); // Frenamos el envío tradicional
-            
+            evento.preventDefault();
             const formData = new FormData(formulario);
-            
             fetch('/registro', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                    window.location.href = data.redirect;
-                } else {
-                    alert("❌ " + data.message); // El mensaje emergente
-                }
-            })
-            .catch(error => alert("Error en el servidor"));
+                if (data.status === 'success') window.location.href = data.redirect;
+                else alert(data.message);
+            });
         }
-
-
-
-
     });
 });
