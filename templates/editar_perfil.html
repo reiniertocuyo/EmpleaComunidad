@@ -1,15 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>Editar Información Básica</h2>
+<h2>Información Básica</h2>
 <form id="formPerfil">
     <div>
-        <label>Nombre y Apellido:</label><br>
+        <label>Nombre Completo:</label><br>
         <input type="text" id="nombre_completo" value="{{ u.nombre_completo or '' }}">
     </div><br>
 
     <div>
-        <label>Descripción profesional:</label><br>
+        <label>Descripción Personal:</label><br>
         <textarea id="descripcion">{{ u.descripcion or '' }}</textarea>
     </div><br>
     
@@ -27,34 +27,54 @@
         <input type="date" id="fecha_nacimiento" value="{{ u.fecha_nacimiento or '' }}">
     </div><br>
     
-    <button type="submit">Actualizar Datos Básicos</button>
+    <button type="submit">Actualizar Información Básica</button>
 </form>
 
 <hr>
 
-<h2>Experiencia Laboral</h2>
-<div id="seccionExperiencia">
+<h2>Gestión de Experiencia</h2>
+<div id="lista-experiencia">
+    {% for exp in experiencias %}
+    <p>
+        <strong>{{ exp.compania }}</strong> - {{ exp.puesto }} ({{ exp.ano }}) 
+        <button type="button" onclick="eliminarItem('experiencia', {{ exp.id }})" style="color:red;">Eliminar</button>
+    </p>
+    {% endfor %}
+</div>
+
+<div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+    <h4>Añadir nueva experiencia:</h4>
     <input type="text" id="exp_compania" placeholder="Compañía">
     <input type="text" id="exp_puesto" placeholder="Puesto">
     <input type="number" id="exp_ano" placeholder="Año">
-    <button onclick="agregarItem('experiencia')">Añadir Trabajo</button>
+    <button type="button" onclick="agregarItem('experiencia')">Añadir Experiencia</button>
 </div>
 
 <hr>
 
-<h2>Educación</h2>
-<div id="seccionEducacion">
+<h2>Gestión de Educación</h2>
+<div id="lista-educacion">
+    {% for edu in educaciones %}
+    <p>
+        <strong>{{ edu.institucion }}</strong> - {{ edu.nivel }} ({{ edu.ano }}) 
+        <button type="button" onclick="eliminarItem('educacion', {{ edu.id }})" style="color:red;">Eliminar</button>
+    </p>
+    {% endfor %}
+</div>
+
+<div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+    <h4>Añadir nueva educación:</h4>
     <input type="text" id="edu_institucion" placeholder="Institución">
-    <input type="text" id="edu_nivel" placeholder="Nivel (Ej: Universitario)">
+    <input type="text" id="edu_nivel" placeholder="Nivel">
     <input type="number" id="edu_ano" placeholder="Año">
-    <button onclick="agregarItem('educacion')">Añadir Educación</button>
+    <button type="button" onclick="agregarItem('educacion')">Añadir Educación</button>
 </div>
 
 <br>
-<a href="{{ url_for('dashboard') }}">Volver al Dashboard</a>
+<a href="{{ url_for('dashboard') }}" style="font-weight: bold; color: blue;">← Volver al Dashboard</a>
 
 <script>
-// Manejo de datos básicos
+// 1. GUARDAR DATOS BÁSICOS
 document.getElementById('formPerfil').onsubmit = async (e) => {
     e.preventDefault();
     const datos = {
@@ -70,28 +90,37 @@ document.getElementById('formPerfil').onsubmit = async (e) => {
         body: JSON.stringify(datos)
     });
     
-    if(resp.ok) alert("Datos básicos guardados");
+    const res = await resp.json();
+    if(res.status === "success") {
+        alert("¡Información básica actualizada!");
+    } else {
+        alert("Error al guardar básicos: " + res.message);
+    }
 };
 
-// Función genérica para añadir Experiencia o Educación
+// 2. AGREGAR EXPERIENCIA O EDUCACIÓN
 async function agregarItem(tipo) {
+    let url = (tipo === 'experiencia') ? '/perfil/agregar_experiencia' : '/perfil/agregar_educacion';
     let payload = {};
-    let url = '';
 
     if (tipo === 'experiencia') {
-        url = '/perfil/agregar_experiencia';
         payload = {
             compania: document.getElementById('exp_compania').value,
             puesto: document.getElementById('exp_puesto').value,
             ano: document.getElementById('exp_ano').value
         };
     } else {
-        url = '/perfil/agregar_educacion';
         payload = {
             institucion: document.getElementById('edu_institucion').value,
             nivel: document.getElementById('edu_nivel').value,
             ano: document.getElementById('edu_ano').value
         };
+    }
+
+    // Validación simple
+    if (!Object.values(payload).every(val => val !== "")) {
+        alert("Por favor rellena todos los campos del nuevo registro");
+        return;
     }
 
     const resp = await fetch(url, {
@@ -101,8 +130,24 @@ async function agregarItem(tipo) {
     });
 
     if (resp.ok) {
-        alert("Agregado con éxito");
-        location.reload(); // Recargamos para limpiar campos y mostrar que se guardó
+        location.reload(); // Recargamos para que aparezca en la lista
+    } else {
+        alert("Error al añadir el registro.");
+    }
+}
+
+// 3. ELIMINAR REGISTROS
+async function eliminarItem(tabla, id) {
+    if(!confirm("¿Estás seguro de que quieres eliminar este elemento?")) return;
+    
+    const resp = await fetch(`/perfil/eliminar/${tabla}/${id}`, { 
+        method: 'POST' 
+    });
+    
+    if(resp.ok) {
+        location.reload();
+    } else {
+        alert("No se pudo eliminar.");
     }
 }
 </script>

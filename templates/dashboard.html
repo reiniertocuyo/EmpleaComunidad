@@ -1,67 +1,36 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Panel de Perfil</h1>
+    <h1>Perfil de {{ u.nombre_completo or u.nombre }}</h1>
     
-    <div>
-        <p><strong>Username:</strong> @{{ u.nombre }}</p>
-        <p><strong>Nombre Completo:</strong> {{ u.nombre_completo or 'No especificado' }}</p>
-        <p><strong>Edad:</strong> {{ edad }} años</p>
-        <p><strong>Género:</strong> {{ u.genero or 'No especificado' }}</p>
-        
-        <hr>
-        
-        <h3>Descripción Profesional</h3>
-        <p>{{ u.descripcion or 'Sin descripción todavía...' }}</p>
-        
-        <hr>
+    <p><strong>Edad:</strong> {{ edad }} años | <strong>Género:</strong> {{ u.genero }}</p>
+    
+    <h3>Sobre mí</h3>
+    <p>{{ u.descripcion or 'Sin descripción.' }}</p>
+    
+    <hr>
 
-        <h3>Experiencia Laboral</h3>
-        {% if experiencias %}
-            <ul>
-            {% for exp in experiencias %}
-                <li>
-                    <strong>{{ exp.compania }}</strong> - {{ exp.puesto }} ({{ exp.ano }})
-                    <button onclick="eliminar('experiencia', {{ exp.id }})" style="color: red; border: none; background: none; cursor: pointer;">[Eliminar]</button>
-                </li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se ha agregado experiencia.</p>
-        {% endif %}
-        
-        <hr>
+    <h3>Experiencia Laboral</h3>
+    <ul>
+    {% for exp in experiencias %}
+        <li><strong>{{ exp.compania }}</strong>: {{ exp.puesto }} ({{ exp.ano }})</li>
+    {% else %}
+        <li>Aún no hay experiencia registrada.</li>
+    {% endfor %}
+    </ul>
+    
+    <hr>
 
-        <h3>Educación</h3>
-        {% if educaciones %}
-            <ul>
-            {% for edu in educaciones %}
-                <li>
-                    <strong>{{ edu.institucion }}</strong> - {{ edu.nivel }} ({{ edu.ano }})
-                    <button onclick="eliminar('educacion', {{ edu.id }})" style="color: red; border: none; background: none; cursor: pointer;">[Eliminar]</button>
-                </li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se ha agregado educación.</p>
-        {% endif %}
-    </div>
+    <h3>Educación</h3>
+    <ul>
+    {% for edu in educaciones %}
+        <li><strong>{{ edu.institucion }}</strong>: {{ edu.nivel }} ({{ edu.ano }})</li>
+    {% else %}
+        <li>Aún no hay educación registrada.</li>
+    {% endfor %}
+    </ul>
 
     <br>
-    <a href="{{ url_for('editar_perfil') }}">Editar Perfil / Añadir más datos</a>
+    <a href="{{ url_for('editar_perfil') }}">Configuración / Editar Perfil</a>
     <br><br>
-    <a href="{{ url_for('logout') }}" style="color: red;">Cerrar sesión</a>
-
-<script>
-async function eliminar(tabla, id) {
-    if(!confirm("¿Estás seguro de eliminar este ítem?")) return;
-
-    const resp = await fetch(`/perfil/eliminar/${tabla}/${id}`, {
-        method: 'POST'
-    });
-
-    if(resp.ok) {
-        location.reload();
-    }
-}
-</script>
+    <a href="{{ url_for('logout') }}" style="color: gray;">Cerrar sesión</a>
 {% endblock %}
