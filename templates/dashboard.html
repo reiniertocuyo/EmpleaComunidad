@@ -1,6 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Perfil de {{ u.nombre_completo or u.nombre }}</h1>
+
+    <div class="perfil-cabecera">
+    {% if u.foto %}
+        <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="120" style="border-radius: 10px;">
+    {% else %}
+        <div style="width: 120px; height: 120px; background: #ccc;">Sin foto</div>
+    {% endif %}
+    <h1>Bienvenido, {{ u.nombre_completo or u.nombre }}</h1>
+    </div>
     
     <p><strong>Edad:</strong> {{ edad }} años | <strong>Género:</strong> {{ u.genero }}</p>
     

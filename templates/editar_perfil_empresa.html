@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div style="max-width: 800px; margin: auto;">
+    <h2>Configuración de Perfil Corporativo</h2>
+    
+    <form action="/perfil/editar" method="POST" enctype="multipart/form-data" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <div style="margin-bottom: 15px;">
+            <label>Logo de la Empresa:</label><br>
+            <input type="file" name="foto" accept="image/*" style="margin-top: 10px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Nombre de la Empresa:</label><br>
+            <input type="text" name="nombre_completo" value="{{ u.nombre_completo or '' }}" required style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Descripción de la Empresa / Slogan:</label><br>
+            <textarea name="descripcion" rows="5" style="width: 100%; padding: 8px; margin-top: 5px;">{{ u.descripcion or '' }}</textarea>
+        </div>
+
+        <button type="submit" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+            Guardar Cambios Principales
+        </button>
+    </form>
+
+    <hr style="margin: 40px 0;">
+
+    <h3>Gestión de Contactos y Enlaces</h3>
+    <div id="lista-contactos" style="margin-bottom: 20px;">
+        {% for c in contactos %}
+        <div style="display: flex; justify-content: space-between; background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 5px;">
+            <span><strong>{{ c.tipo_contacto }}:</strong> {{ c.valor }}</span>
+            <button onclick="eliminarContacto({{ c.id }})" style="color: red; border: none; background: none; cursor: pointer; font-weight: bold;">Eliminar</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="background: #f1f1f1; padding: 20px; border-radius: 8px;">
+        <h4>Añadir nuevo contacto:</h4>
+        <div style="display: flex; gap: 10px;">
+            <select id="nuevo_tipo" style="padding: 8px;">
+                <option value="Web">Sitio Web</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Email Corporativo">Email Corporativo</option>
+                <option value="Teléfono">Teléfono</option>
+            </select>
+            <input type="text" id="nuevo_valor" placeholder="URL o número" style="flex-grow: 1; padding: 8px;">
+            <button onclick="agregarContacto()" style="padding: 8px 15px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Añadir
+            </button>
+        </div>
+    </div>
+
+    <br>
+    <a href="{{ url_for('dashboard') }}" style="color: #2196F3; text-decoration: none; font-weight: bold;">← Volver al Panel</a>
+</div>
+
+<script>
+async function agregarContacto() {
+    const valor = document.getElementById('nuevo_valor').value;
+    if (!valor) return alert("Escribe un valor");
+
+    const payload = {
+        tipo_contacto: document.getElementById('nuevo_tipo').value,
+        valor: valor
+    };
+
+    const resp = await fetch('/perfil/agregar_contacto', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+
+    if (resp.ok) {
+        location.reload();
+    } else {
+        alert("Error al añadir contacto");
+    }
+}
+
+async function eliminarContacto(id) {
+    if (!confirm("¿Eliminar este contacto?")) return;
+    
+    const resp = await fetch(`/perfil/eliminar/contacto/${id}`, {
+        method: 'POST'
+    });
+
+    if (resp.ok) {
+        location.reload();
+    } else {
+        alert("Error al eliminar");
+    }
+}
+</script>
+
+{% endblock %}

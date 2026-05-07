@@ -2,20 +2,37 @@
 {% block content %}
 
 <h2>Información Básica</h2>
-<form id="formPerfil">
+<!-- Añadimos enctype para que el formulario sepa que enviará archivos -->
+<form id="formPerfil" enctype="multipart/form-data">
+    
+    <!-- Visualización de la foto actual -->
+    <div style="margin-bottom: 20px;">
+        <label>Foto de Perfil Actual:</label><br>
+        {% if u.foto %}
+            <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="150" style="border-radius: 50%; border: 2px solid #ddd;">
+        {% else %}
+            <div style="width: 150px; height: 150px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #888;">
+                Sin foto
+            </div>
+        {% endif %}
+        <br><br>
+        <label>Cambiar foto:</label>
+        <input type="file" id="foto" name="foto" accept="image/*">
+    </div>
+
     <div>
         <label>Nombre Completo:</label><br>
-        <input type="text" id="nombre_completo" value="{{ u.nombre_completo or '' }}">
+        <input type="text" id="nombre_completo" name="nombre_completo" value="{{ u.nombre_completo or '' }}">
     </div><br>
 
     <div>
         <label>Descripción Personal:</label><br>
-        <textarea id="descripcion">{{ u.descripcion or '' }}</textarea>
+        <textarea id="descripcion" name="descripcion">{{ u.descripcion or '' }}</textarea>
     </div><br>
     
     <div>
         <label>Género:</label>
-        <select id="genero">
+        <select id="genero" name="genero">
             <option value="Masculino" {{ 'selected' if u.genero == 'Masculino' }}>Masculino</option>
             <option value="Femenino" {{ 'selected' if u.genero == 'Femenino' }}>Femenino</option>
             <option value="Otro" {{ 'selected' if u.genero == 'Otro' }}>Otro</option>
@@ -24,7 +41,7 @@
     
     <div>
         <label>Fecha de nacimiento:</label>
-        <input type="date" id="fecha_nacimiento" value="{{ u.fecha_nacimiento or '' }}">
+        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ u.fecha_nacimiento or '' }}">
     </div><br>
     
     <button type="submit">Actualizar Información Básica</button>
@@ -74,31 +91,37 @@
 <a href="{{ url_for('dashboard') }}" style="font-weight: bold; color: blue;">← Volver al Dashboard</a>
 
 <script>
-// 1. GUARDAR DATOS BÁSICOS
+// 1. GUARDAR DATOS BÁSICOS (Incluyendo Foto)
 document.getElementById('formPerfil').onsubmit = async (e) => {
     e.preventDefault();
-    const datos = {
-        nombre_completo: document.getElementById('nombre_completo').value,
-        descripcion: document.getElementById('descripcion').value,
-        genero: document.getElementById('genero').value,
-        fecha_nacimiento: document.getElementById('fecha_nacimiento').value
-    };
+    
+    // IMPORTANTE: Para enviar archivos usamos FormData
+    const formData = new FormData();
+    formData.append('nombre_completo', document.getElementById('nombre_completo').value);
+    formData.append('descripcion', document.getElementById('descripcion').value);
+    formData.append('genero', document.getElementById('genero').value);
+    formData.append('fecha_nacimiento', document.getElementById('fecha_nacimiento').value);
+    
+    const fotoInput = document.getElementById('foto');
+    if (fotoInput.files[0]) {
+        formData.append('foto', fotoInput.files[0]);
+    }
 
     const resp = await fetch('/perfil/editar', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(datos)
+        // NOTA: Con FormData NO se pone el header 'Content-Type'
+        body: formData
     });
     
-    const res = await resp.json();
-    if(res.status === "success") {
-        alert("¡Información básica actualizada!");
+    if(resp.ok) {
+        alert("¡Perfil actualizado!");
+        location.reload(); // Recargamos para ver la nueva foto
     } else {
-        alert("Error al guardar básicos: " + res.message);
+        alert("Error al actualizar perfil");
     }
 };
 
-// 2. AGREGAR EXPERIENCIA O EDUCACIÓN
+// 2. AGREGAR ITEM (Mantenemos JSON porque aquí no hay archivos)
 async function agregarItem(tipo) {
     let url = (tipo === 'experiencia') ? '/perfil/agregar_experiencia' : '/perfil/agregar_educacion';
     let payload = {};
@@ -117,9 +140,8 @@ async function agregarItem(tipo) {
         };
     }
 
-    // Validación simple
     if (!Object.values(payload).every(val => val !== "")) {
-        alert("Por favor rellena todos los campos del nuevo registro");
+        alert("Por favor rellena todos los campos");
         return;
     }
 
@@ -129,26 +151,13 @@ async function agregarItem(tipo) {
         body: JSON.stringify(payload)
     });
 
-    if (resp.ok) {
-        location.reload(); // Recargamos para que aparezca en la lista
-    } else {
-        alert("Error al añadir el registro.");
-    }
+    if (resp.ok) location.reload();
 }
 
-// 3. ELIMINAR REGISTROS
 async function eliminarItem(tabla, id) {
-    if(!confirm("¿Estás seguro de que quieres eliminar este elemento?")) return;
-    
-    const resp = await fetch(`/perfil/eliminar/${tabla}/${id}`, { 
-        method: 'POST' 
-    });
-    
-    if(resp.ok) {
-        location.reload();
-    } else {
-        alert("No se pudo eliminar.");
-    }
+    if(!confirm("¿Borrar elemento?")) return;
+    const resp = await fetch(`/perfil/eliminar/${tabla}/${id}`, { method: 'POST' });
+    if(resp.ok) location.reload();
 }
 </script>
 {% endblock %}

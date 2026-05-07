@@ -7,17 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MEJORA DE UX: LIMPIEZA EN TIEMPO REAL ---
     usuarioInput.addEventListener('input', () => {
-        // Convierte a minúscula y elimina cualquier cosa que no sea a-z o 0-9
         usuarioInput.value = usuarioInput.value.toLowerCase().replace(/[^a-z0-9]/g, '');
     });
 
-    // Función de validación para el submit
     const validarFormatoEmail = (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
 
     formulario.addEventListener('submit', (evento) => {
+        evento.preventDefault(); // Detenemos siempre el envío tradicional
+        
         let hayErrores = false;
 
         // Limpiar errores previos
@@ -25,19 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('errorEmail').textContent = '';
         document.getElementById('errorPassword').textContent = '';
 
-        // Validar Usuario (por si acaso pegan texto con símbolos)
+        // Validaciones de Front-end
         if (usuarioInput.value.length < 3) {
             document.getElementById('errorUsuario').textContent = 'El usuario es muy corto.';
             hayErrores = true;
         }
 
-        // Validar Email
         if (!validarFormatoEmail(emailInput.value)) {
             document.getElementById('errorEmail').textContent = 'Email no válido.';
             hayErrores = true;
         }
 
-        // Validar Password
         if (passwordInput.value.length < 6) {
             document.getElementById('errorPassword').textContent = 'Mínimo 6 caracteres.';
             hayErrores = true;
@@ -46,19 +44,27 @@ document.addEventListener('DOMContentLoaded', () => {
             hayErrores = true;
         }
 
-        if (hayErrores) {
-            evento.preventDefault();
-        } else {
-            evento.preventDefault();
+        if (!hayErrores) {
+            // FormData captura automáticamente el 'tipo' (persona/empresa) 
+            // porque tiene el atributo name="tipo" en el HTML.
             const formData = new FormData(formulario);
+            
             fetch('/registro', {
                 method: 'POST',
                 body: formData
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') window.location.href = data.redirect;
-                else alert(data.message);
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    // Si el servidor dice que el email ya existe, por ejemplo:
+                    alert(data.message);
+                }
+            })
+            .catch(err => {
+                console.error("Error en la petición:", err);
+                alert("Ocurrió un error en el servidor.");
             });
         }
     });

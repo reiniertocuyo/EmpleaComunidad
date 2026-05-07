@@ -2,18 +2,26 @@
 
 {% block content %}
     <h1>Crear Cuenta</h1>
-    <!-- Le damos un ID al formulario para que JS lo encuentre fácil -->
+    
     <form id="formRegistro" action="/registro" method="POST">
         
+        <!-- NUEVO: Selector de Tipo de Cuenta -->
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;">
+            <label><strong>Tipo de cuenta:</strong></label><br>
+            <input type="radio" name="tipo" value="persona" id="tipo_persona" checked>
+            <label for="tipo_persona">Personal (Busco empleo)</label>
+            <br>
+            <input type="radio" name="tipo" value="empresa" id="tipo_empresa">
+            <label for="tipo_empresa">Empresa (Busco talento)</label>
+        </div>
+
         <label>Nombre de usuario:</label><br>
         <input type="text" name="usuario" id="usuario" required>
         <span id="errorUsuario" style="color: red; font-size: 0.8em; display: block;"></span>
-        <br><br>
+        <br>
 
-        <!-- NUEVO: Campo de Correo -->
         <label>Correo electrónico:</label><br>
         <input type="email" name="email" id="email" required>
-        <!-- Aquí JS mostrará el error si el email no es válido -->
         <span id="errorEmail" style="color: red; font-size: 0.8em; display: block;"></span>
         <br>
 
@@ -21,16 +29,13 @@
         <input type="password" name="password" id="password" required>
         <br><br>
 
-        <!-- NUEVO: Confirmar Contraseña (esencial para validación) -->
         <label>Confirma tu contraseña:</label><br>
         <input type="password" name="confirm_password" id="confirm_password" required>
-        <!-- Aquí JS mostrará el error si las contraseñas no coinciden o es corta -->
         <span id="errorPassword" style="color: red; font-size: 0.8em; display: block;"></span>
         <br>
 
         <button type="submit">Registrarme</button>
     </form>
 
-    <!-- Vinculamos el JavaScript al final -->
     <script src="{{ url_for('static', filename='js/registro.js') }}"></script>
 {% endblock %}
