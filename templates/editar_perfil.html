@@ -79,10 +79,17 @@
     {% endfor %}
 </div>
 
-<div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+<div>
     <h4>Añadir nueva educación:</h4>
     <input type="text" id="edu_institucion" placeholder="Institución">
-    <input type="text" id="edu_nivel" placeholder="Nivel">
+
+    <select id="edu_nivel">
+        <option value="Sin especificar / Todos">Sin especificar / Todos</option>
+        <option value="Bachiller">Bachiller</option>
+        <option value="Formación Técnica / Certificaciones">Formación Técnica / Certificaciones</option>
+        <option value="Universitario">Universitario</option>
+    </select>
+
     <input type="number" id="edu_ano" placeholder="Año">
     <button type="button" onclick="agregarItem('educacion')">Añadir Educación</button>
 </div>
