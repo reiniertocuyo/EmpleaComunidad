@@ -4,22 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpleaComunidad</title>
-    </head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
 <body>
-    <nav>
-        <a href="/">Inicio</a> | 
-        <a href="/registro">Registrarse</a>
-    </nav>
-    <hr>
+    <header class="barra-navegacion">
+        <!-- Izquierda: Logo de la aplicación -->
+        <div class="logo-comunidad">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" class="imagen-logo" alt="Logo EmpleaComunidad">
+            <span class="nombre-logo">EmpleaComunidad</span>
+        </div>
 
+        <!-- Derecha: Los enlaces convertidos en botones estéticos -->
+        <nav class="menu-navegacion">
+            {% if session.get('user_token') %}
+                <!-- Si el usuario ha iniciado sesión -->
+                {% if session.get('user_tipo') == 'persona' %}
+                    <a href="{{ url_for('empleos_recomendados') }}" class="btn-nav btn-destacado">Ver Trabajos</a> 
+                {% endif %}
+                
+                <a href="{{ url_for('dashboard') }}" class="btn-nav">Dashboard</a> 
+                <a href="{{ url_for('logout') }}" class="btn-nav btn-salir">Cerrar Sesión</a>
+            {% else %}
+                <!-- Si no hay sesión iniciada -->
+                <a href="{{ url_for('index') }}" class="btn-nav">Inicio</a> 
+                <a href="{{ url_for('registro') }}" class="btn-nav btn-destacado">Registrarse</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <!-- El contenido principal se mantiene intacto -->
     <main>
         {% block content %}
         {% endblock %}
     </main>
 
-    <hr>
+    <!-- Footer limpio sin etiquetas <hr> -->
     <footer>
-        <p>&copy; 2026 - EmpleaComunidad</p>
+        <p>&copy; 2026 - EmpleaComunidad. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>

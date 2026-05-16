@@ -1,26 +1,26 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div style="max-width: 800px; margin: auto;">
+<div>
     <h2>Configuración de Perfil Corporativo</h2>
     
-    <form action="/perfil/editar" method="POST" enctype="multipart/form-data" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
-        <div style="margin-bottom: 15px;">
+    <form action="/perfil/editar" method="POST" enctype="multipart/form-data" >
+        <div >
             <label>Logo de la Empresa:</label><br>
-            <input type="file" name="foto" accept="image/*" style="margin-top: 10px;">
+            <input type="file" name="foto" accept="image/*" >
         </div>
 
-        <div style="margin-bottom: 15px;">
+        <div >
             <label>Nombre de la Empresa:</label><br>
-            <input type="text" name="nombre_completo" value="{{ u.nombre_completo or '' }}" required style="width: 100%; padding: 8px; margin-top: 5px;">
+            <input type="text" name="nombre_completo" value="{{ u.nombre_completo or '' }}" required >
         </div>
 
-        <div style="margin-bottom: 15px;">
+        <div >
             <label>Descripción de la Empresa / Slogan:</label><br>
-            <textarea name="descripcion" rows="5" style="width: 100%; padding: 8px; margin-top: 5px;">{{ u.descripcion or '' }}</textarea>
+            <textarea name="descripcion" rows="5" >{{ u.descripcion or '' }}</textarea>
         </div>
 
-        <button type="submit" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+        <button type="submit" >
             Guardar Cambios Principales
         </button>
     </form>
@@ -28,34 +28,34 @@
     <hr style="margin: 40px 0;">
 
     <h3>Gestión de Contactos y Enlaces</h3>
-    <div id="lista-contactos" style="margin-bottom: 20px;">
+    <div id="lista-contactos" >
         {% for c in contactos %}
-        <div style="display: flex; justify-content: space-between; background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 5px;">
+        <div >
             <span><strong>{{ c.tipo_contacto }}:</strong> {{ c.valor }}</span>
-            <button onclick="eliminarContacto({{ c.id }})" style="color: red; border: none; background: none; cursor: pointer; font-weight: bold;">Eliminar</button>
+            <button onclick="eliminarContacto({{ c.id }})" >Eliminar</button>
         </div>
         {% endfor %}
     </div>
 
-    <div style="background: #f1f1f1; padding: 20px; border-radius: 8px;">
+    <div >
         <h4>Añadir nuevo contacto:</h4>
-        <div style="display: flex; gap: 10px;">
-            <select id="nuevo_tipo" style="padding: 8px;">
+        <div >
+            <select id="nuevo_tipo" >
                 <option value="Web">Sitio Web</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="WhatsApp">WhatsApp</option>
                 <option value="Email Corporativo">Email Corporativo</option>
                 <option value="Teléfono">Teléfono</option>
             </select>
-            <input type="text" id="nuevo_valor" placeholder="URL o número" style="flex-grow: 1; padding: 8px;">
-            <button onclick="agregarContacto()" style="padding: 8px 15px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            <input type="text" id="nuevo_valor" placeholder="URL o número" >
+            <button onclick="agregarContacto()" >
                 Añadir
             </button>
         </div>
     </div>
 
     <br>
-    <a href="{{ url_for('dashboard') }}" style="color: #2196F3; text-decoration: none; font-weight: bold;">← Volver al Panel</a>
+    <a href="{{ url_for('dashboard') }}" >← Volver al Panel</a>
 </div>
 
 <script>

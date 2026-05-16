@@ -1,16 +1,20 @@
 {% extends "layout.html" %}
 {% block content %}
 
-    <div class="perfil-cabecera">
+    <div class="perfil-cabecera" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
     {% if u.foto %}
-        <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="120" style="border-radius: 10px;">
+        <!-- Añadimos la clase circular -->
+        <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" class="foto-perfil-vista">
     {% else %}
-        <div style="width: 120px; height: 120px; background: #ccc;">Sin foto</div>
+        <!-- Añadimos la clase placeholder circular -->
+        <div class="sin-foto">Sin foto</div>
     {% endif %}
-    <h1>Bienvenido, {{ u.nombre_completo or u.nombre }}</h1>
-    </div>
     
-    <p><strong>Edad:</strong> {{ edad }} años | <strong>Género:</strong> {{ u.genero }}</p>
+    <div>
+        <h1>Bienvenido, {{ u.nombre_completo or u.nombre }}</h1>
+        <p style="color: #718096; margin: 0;"><strong>Edad:</strong> {{ edad }} años | <strong>Género:</strong> {{ u.genero }}</p>
+    </div>
+    </div>
     
     <h3>Sobre mí</h3>
     <p>{{ u.descripcion or 'Sin descripción.' }}</p>
@@ -18,9 +22,9 @@
     <hr>
 
     <h3>Experiencia Laboral</h3>
-    <ul>
+    <ul style="padding-left: 20px;">
     {% for exp in experiencias %}
-        <li><strong>{{ exp.compania }}</strong>: {{ exp.puesto }} ({{ exp.ano }})</li>
+        <li style="margin-bottom: 5px;"><strong>{{ exp.compania }}</strong>: {{ exp.puesto }} ({{ exp.ano }})</li>
     {% else %}
         <li>Aún no hay experiencia registrada.</li>
     {% endfor %}
@@ -29,16 +33,22 @@
     <hr>
 
     <h3>Educación</h3>
-    <ul>
+    <ul style="padding-left: 20px;">
     {% for edu in educaciones %}
-        <li><strong>{{ edu.institucion }}</strong>: {{ edu.nivel }} ({{ edu.ano }})</li>
+        <li style="margin-bottom: 5px;"><strong>{{ edu.institucion }}</strong>: {{ edu.nivel }} ({{ edu.ano }})</li>
     {% else %}
         <li>Aún no hay educación registrada.</li>
     {% endfor %}
     </ul>
 
-    <br>
-    <a href="{{ url_for('editar_perfil') }}">Configuración / Editar Perfil</a>
-    <br><br>
-    <a href="{{ url_for('logout') }}" style="color: gray;">Cerrar sesión</a>
+    <!-- Ahora el usuario también tiene botones reales en lugar de links simples -->
+    <div style="margin-top: 30px; display: flex; gap: 10px;">
+        <a href="{{ url_for('editar_perfil') }}">
+            <button type="button">Configuración / Editar Perfil</button>
+        </a>
+        <a href="{{ url_for('logout') }}">
+            <button type="button" class="btn-cerrar-sesion">Cerrar sesión</button>
+        </a>
+    </div>
+    
 {% endblock %}

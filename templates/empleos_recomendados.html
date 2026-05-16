@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- 1. BARRA DE BÚSQUEDA (Matching Personalizado) -->
+<div>
+    <form action="{{ url_for('empleos_buscar') }}" method="GET">
+        <input type="text" name="q" placeholder="Buscar por puesto, ciudad o palabra clave..." 
+               value="{{ busqueda_actual or '' }}" >
+        
+        <select name="modalidad" >
+            <option value="">Todas las modalidades</option>
+            <option value="Presencial">Presencial</option>
+            <option value="Remoto">Remoto</option>
+            <option value="Híbrido">Híbrido</option>
+        </select>
+        
+        <button type="submit">
+            Buscar
+        </button>
+    </form>
+</div>
+
+<!-- 2. TÍTULO DINÁMICO -->
+{% if busqueda_actual %}
+    <h2>Resultados para: "{{ busqueda_actual }}"</h2>
+    <a href="{{ url_for('empleos_recomendados') }}">Ver mis recomendaciones automáticas</a>
+{% else %}
+    <h2>Empleos recomendados para tu perfil</h2>
+    <p style="color: #666;">Basado en tu edad y nivel educativo.</p>
+{% endif %}
+
+<hr>
+
+<!-- 3. LISTADO DE VACANTES -->
+<div >
+    {% for v in vacantes %}
+        <div >
+            <h3 >{{ v.titulo }}</h3>
+            <p ><strong>📍 Lugar:</strong> {{ v.lugar }} | <strong>💻 Modalidad:</strong> {{ v.modalidad }}</p>
+            <p >{{ v.descripcion }}</p>
+            
+            <div >
+                Requisitos: {{ v.edad_minima }}-{{ v.edad_maxima }} años | {{ v.nivel_educativo }}
+            </div>
+            
+            <div >
+                <button onclick="alert('Funcionalidad de postulación en desarrollo')" >
+                    Postularme ahora
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <div >
+            <p>No se encontraron vacantes que coincidan con los criterios.</p>
+            <a href="{{ url_for('empleos_buscar') }}">Ver todos los empleos disponibles</a>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

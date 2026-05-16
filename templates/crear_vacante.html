@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<form action="{{ url_for('ruta_crear_solicitud') }}" method="POST" onsubmit="return validarFormulario()" >
+    
+    <div >
+        <label><strong>Título del Puesto:</strong> (Obligatorio)</label><br>
+        <input type="text" name="titulo" id="titulo" required placeholder="Ej: Desarrollador Backend Senior">
+    </div>
+
+    <div>
+        <label><strong>Descripción y Requisitos:</strong> (Obligatorio)</label><br>
+        <textarea name="descripcion" id="descripcion" required placeholder="Describe las tareas y habilidades necesarias..."></textarea>
+    </div>
+
+    <div >
+        <div>
+            <label>Modalidad:</label>
+            <select name="modalidad" required style="width: 100%; padding: 8px;">
+                <option value="Presencial">Presencial</option>
+                <option value="Remoto">Remoto</option>
+                <option value="Híbrido">Híbrido</option>
+            </select>
+        </div>
+        <div>
+            <label>Lugar:</label>
+            <input type="text" name="lugar" required placeholder="Ej: Valencia, Carabobo" >
+        </div>
+    </div>
+
+    <div >
+        <div>
+            <label>Edad Mínima:</label>
+            <input type="number" name="edad_minima" id="edad_min" min="18" max="99" value="18" >
+        </div>
+        <div>
+            <label>Edad Máxima:</label>
+            <input type="number" name="edad_maxima" id="edad_max" min="18" max="99" value="60" required >
+        </div>
+        <div>
+            <label>Nivel Educativo Requerido:</label>
+            <select name="nivel_educativo" required >
+                <option value="Sin-especificar">Sin especificar / Todos</option>
+                <option value="Bachiller">Bachiller</option>
+                <option value="Certificaciones">Formación Técnica / Certificaciones</option>
+                <option value="Universitario">Universitario</option>
+            </select>
+        </div>
+    </div>
+
+    <button type="submit" >
+        Publicar Vacante
+    </button>
+</form>
+
+<div>
+    <h3>Administrar Vacantes Publicadas</h3>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vacantes %}
+                <tr>
+                    <td>{{ v.titulo }}</td>
+                    <td>{{ v.fecha_creacion }}</td>
+                    <td>
+                        <button onclick="eliminarVacante({{ v.id }})">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+function validarFormulario() {
+    const titulo = document.getElementById('titulo').value.trim();
+    const desc = document.getElementById('descripcion').value.trim();
+    const edadMin = parseInt(document.getElementById('edad_min').value);
+    const edadMax = parseInt(document.getElementById('edad_max').value);
+
+    // 1. Validar que no sean solo espacios en blanco
+    if (titulo.length < 5) {
+        alert("El título es muy corto o está vacío.");
+        return false;
+    }
+    if (desc.length < 20) {
+        alert("La descripción debe tener al menos 20 caracteres.");
+        return false;
+    }
+
+    // 2. Validar coherencia de edad
+    if (edadMin > edadMax) {
+        alert("La edad mínima no puede ser mayor a la edad máxima.");
+        return false;
+    }
+
+    return true;
+}
+
+function eliminarVacante(id) {
+    if(confirm('¿Estás seguro de eliminar esta vacante?')) {
+        fetch(`/solicitudes/eliminar/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') location.reload();
+        });
+    }
+}
+</script>
+
+{% endblock %}

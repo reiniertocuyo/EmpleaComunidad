@@ -2,23 +2,22 @@
 {% block content %}
 
 <h2>Información Básica</h2>
-<!-- Añadimos enctype para que el formulario sepa que enviará archivos -->
 <form id="formPerfil" enctype="multipart/form-data">
     
     <!-- Visualización de la foto actual -->
-    <div style="margin-bottom: 20px;">
+    <div >
         <label>Foto de Perfil Actual:</label><br>
         {% if u.foto %}
-            <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="150" style="border-radius: 50%; border: 2px solid #ddd;">
+            <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="150" >
         {% else %}
-            <div style="width: 150px; height: 150px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #888;">
+            <div >
                 Sin foto
             </div>
         {% endif %}
         <br><br>
         <label>Cambiar foto:</label>
         <input type="file" id="foto" name="foto" accept="image/*">
-    </div>
+    </div><br>
 
     <div>
         <label>Nombre Completo:</label><br>
@@ -39,8 +38,8 @@
         </select>
     </div><br>
     
-    <div>
-        <label>Fecha de nacimiento:</label>
+    <div class="grupo-formulario">
+        <label for="fecha_nacimiento">Fecha de nacimiento:</label>
         <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ u.fecha_nacimiento or '' }}">
     </div><br>
     
@@ -59,7 +58,7 @@
     {% endfor %}
 </div>
 
-<div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+<div >
     <h4>Añadir nueva experiencia:</h4>
     <input type="text" id="exp_compania" placeholder="Compañía">
     <input type="text" id="exp_puesto" placeholder="Puesto">
@@ -84,9 +83,9 @@
     <input type="text" id="edu_institucion" placeholder="Institución">
 
     <select id="edu_nivel">
-        <option value="Sin especificar / Todos">Sin especificar / Todos</option>
+        <option value="Sin-especificar">Sin especificar / Todos</option>
         <option value="Bachiller">Bachiller</option>
-        <option value="Formación Técnica / Certificaciones">Formación Técnica / Certificaciones</option>
+        <option value="Certificaciones">Formación Técnica / Certificaciones</option>
         <option value="Universitario">Universitario</option>
     </select>
 
@@ -95,7 +94,7 @@
 </div>
 
 <br>
-<a href="{{ url_for('dashboard') }}" style="font-weight: bold; color: blue;">← Volver al Dashboard</a>
+<a href="{{ url_for('dashboard') }}" >← Volver al Dashboard</a>
 
 <script>
 // 1. GUARDAR DATOS BÁSICOS (Incluyendo Foto)

@@ -6,13 +6,30 @@
     <form id="formRegistro" action="/registro" method="POST">
         
         <!-- NUEVO: Selector de Tipo de Cuenta -->
-        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;">
-            <label><strong>Tipo de cuenta:</strong></label><br>
-            <input type="radio" name="tipo" value="persona" id="tipo_persona" checked>
-            <label for="tipo_persona">Personal (Busco empleo)</label>
-            <br>
-            <input type="radio" name="tipo" value="empresa" id="tipo_empresa">
-            <label for="tipo_empresa">Empresa (Busco talento)</label>
+        <div class="grupo-formulario">
+            <label><strong>Tipo de cuenta:</strong></label>
+            
+            <div class="contenedor-tipo-cuenta">
+                <!-- Opción Personal -->
+                <input type="radio" name="tipo" value="persona" id="tipo_persona" checked>
+                <label for="tipo_persona" class="tarjeta-radio">
+                    <span class="icono">👤</span>
+                    <div class="texto-radio">
+                        <strong>Personal</strong>
+                        <p>Busco empleo</p>
+                    </div>
+                </label>
+                
+                <!-- Opción Empresa -->
+                <input type="radio" name="tipo" value="empresa" id="tipo_empresa">
+                <label for="tipo_empresa" class="tarjeta-radio">
+                    <span class="icono">🏢</span>
+                    <div class="texto-radio">
+                        <strong>Empresa</strong>
+                        <p>Busco talento</p>
+                    </div>
+                </label>
+            </div>
         </div>
 
         <label>Nombre de usuario:</label><br>

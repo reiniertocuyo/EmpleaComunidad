@@ -4,7 +4,7 @@ import uuid
 DATABASE_NAME = "database.db"
 
 def conectar():
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = sqlite3.connect(DATABASE_NAME, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -63,8 +63,27 @@ def inicializar_db():
     )
     ''')
 
+    # 5. Tabla de Solicitudes de Trabajo
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS solicitudes_trabajo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        empresa_id INTEGER NOT NULL,
+        titulo TEXT NOT NULL,
+        descripcion TEXT NOT NULL,
+        modalidad TEXT CHECK(modalidad IN ('Remoto', 'Presencial', 'Híbrido')),
+        edad_minima INTEGER,
+        edad_maxima INTEGER,
+        nivel_educativo TEXT,
+        lugar TEXT,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (empresa_id) REFERENCES usuarios (id)
+    )
+    ''')
+
     conn.commit()
     conn.close()
+
+
 
 # --- GESTIÓN DE PERFIL GENERAL ---
 
@@ -98,6 +117,11 @@ def actualizar_perfil(usuario_id, datos):
     except Exception as e:
         print(f"Error al actualizar: {e}")
         return False
+    
+    finally:
+        if conn:
+            conn.close()
+
 
 # --- FUNCIONES PARA EMPRESAS ---
 
@@ -190,3 +214,86 @@ def eliminar_item(tabla, item_id, usuario_id):
     conn.execute(f"DELETE FROM {tabla} WHERE id = ? AND usuario_id = ?", (item_id, usuario_id))
     conn.commit()
     conn.close()
+
+
+
+# vacantes de empresa y esas cosas
+def crear_solicitud(empresa_id, datos):
+    try:
+        conn = conectar()
+        conn.execute('''
+            INSERT INTO solicitudes_trabajo 
+            (empresa_id, titulo, descripcion, modalidad, edad_minima, edad_maxima, nivel_educativo, lugar)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            empresa_id, datos['titulo'], datos['descripcion'], 
+            datos['modalidad'], datos['edad_minima'], datos['edad_maxima'], 
+            datos['nivel_educativo'], datos['lugar']
+        ))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error al crear solicitud: {e}")
+        return False
+
+def obtener_mis_solicitudes(empresa_id):
+    conn = conectar()
+    solicitudes = conn.execute('''
+        SELECT * FROM solicitudes_trabajo 
+        WHERE empresa_id = ? 
+        ORDER BY fecha_creacion DESC
+    ''', (empresa_id,)).fetchall()
+    conn.close()
+    return solicitudes
+
+def eliminar_solicitud(solicitud_id, empresa_id):
+    conn = conectar()
+    conn.execute("DELETE FROM solicitudes_trabajo WHERE id = ? AND empresa_id = ?", (solicitud_id, empresa_id))
+    conn.commit()
+    conn.close()
+
+
+
+def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
+    conn = None # Inicializamos en None para el escudo de seguridad
+    try:
+        conn = conectar()
+        query = "SELECT * FROM solicitudes_trabajo WHERE 1=1"
+        params = []
+
+        # 1. Filtro por palabra clave (Título, Descripción o Lugar)
+        if filtros and filtros.get('keyword'):
+            query += " AND (titulo LIKE ? OR descripcion LIKE ? OR lugar LIKE ?)"
+            lk = f"%{filtros['keyword']}%"
+            params.extend([lk, lk, lk]) # Añadimos el tercer parámetro para 'lugar'
+
+        # 2. Filtro por Modalidad
+        if filtros and filtros.get('modalidad'):
+            query += " AND modalidad = ?"
+            params.append(filtros['modalidad'])
+
+        # 3. Matching Automático
+        if perfil_usuario:
+            # Filtro de Edad
+            if perfil_usuario.get('edad'):
+                query += " AND (edad_minima <= ? AND edad_maxima >= ?)"
+                params.extend([perfil_usuario['edad'], perfil_usuario['edad']])
+            
+            # Filtro de Nivel Educativo
+            if perfil_usuario.get('nivel_educativo'):
+                query += " AND nivel_educativo = ?"
+                params.append(perfil_usuario['nivel_educativo'])
+
+        query += " ORDER BY fecha_creacion DESC"
+        
+        resultados = conn.execute(query, params).fetchall()
+        return resultados
+
+    except Exception as e:
+        print(f"Error en obtener_solicitudes_busqueda: {e}")
+        return [] # Retorna una lista vacía si algo falla para que el HTML no explote
+
+    finally:
+        if conn:
+            conn.close() # SE CIERRA SIEMPRE, adiós base de datos bloqueada
