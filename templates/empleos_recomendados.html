@@ -36,6 +36,7 @@
     {% for v in vacantes %}
         <div >
             <h3 >{{ v.titulo }}</h3>
+            <p><strong>🏢 Empresa:</strong> {{ v.empresa_nombre_real }}</p>
             <p ><strong>📍 Lugar:</strong> {{ v.lugar }} | <strong>💻 Modalidad:</strong> {{ v.modalidad }}</p>
             <p >{{ v.descripcion }}</p>
             
@@ -44,7 +45,7 @@
             </div>
             
             <div >
-                <button onclick="alert('Funcionalidad de postulación en desarrollo')" >
+                <button onclick="location.href='/@{{ v.empresa_username }}'">
                     Postularme ahora
                 </button>
             </div>

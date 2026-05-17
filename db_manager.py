@@ -256,44 +256,66 @@ def eliminar_solicitud(solicitud_id, empresa_id):
 
 
 def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
-    conn = None # Inicializamos en None para el escudo de seguridad
+    conn = None 
     try:
         conn = conectar()
-        query = "SELECT * FROM solicitudes_trabajo WHERE 1=1"
+        
+        # CAMBIAMOS ESTA LÍNEA: Seleccionamos los datos de la vacante y el nombre/nombre_completo de la empresa
+        query = """
+            SELECT s.*, u.nombre AS empresa_username, u.nombre_completo AS empresa_nombre_real 
+            FROM solicitudes_trabajo s
+            INNER JOIN usuarios u ON s.empresa_id = u.id
+            WHERE 1=1
+        """
         params = []
 
         # 1. Filtro por palabra clave (Título, Descripción o Lugar)
         if filtros and filtros.get('keyword'):
-            query += " AND (titulo LIKE ? OR descripcion LIKE ? OR lugar LIKE ?)"
+            # Especificamos "s." antes de las columnas para indicarle a SQL que busque en la tabla de solicitudes
+            query += " AND (s.titulo LIKE ? OR s.descripcion LIKE ? OR s.lugar LIKE ?)"
             lk = f"%{filtros['keyword']}%"
-            params.extend([lk, lk, lk]) # Añadimos el tercer parámetro para 'lugar'
+            params.extend([lk, lk, lk])
 
         # 2. Filtro por Modalidad
         if filtros and filtros.get('modalidad'):
-            query += " AND modalidad = ?"
+            query += " AND s.modalidad = ?"
             params.append(filtros['modalidad'])
 
         # 3. Matching Automático
         if perfil_usuario:
             # Filtro de Edad
             if perfil_usuario.get('edad'):
-                query += " AND (edad_minima <= ? AND edad_maxima >= ?)"
+                query += " AND (s.edad_minima <= ? AND s.edad_maxima >= ?)"
                 params.extend([perfil_usuario['edad'], perfil_usuario['edad']])
             
             # Filtro de Nivel Educativo
             if perfil_usuario.get('nivel_educativo'):
-                query += " AND nivel_educativo = ?"
+                query += " AND s.nivel_educativo = ?"
                 params.append(perfil_usuario['nivel_educativo'])
 
-        query += " ORDER BY fecha_creacion DESC"
+        # Especificamos s.fecha_creacion para el ordenamiento
+        query += " ORDER BY s.fecha_creacion DESC"
         
         resultados = conn.execute(query, params).fetchall()
         return resultados
 
     except Exception as e:
         print(f"Error en obtener_solicitudes_busqueda: {e}")
-        return [] # Retorna una lista vacía si algo falla para que el HTML no explote
-
+        return []
+        
     finally:
         if conn:
-            conn.close() # SE CIERRA SIEMPRE, adiós base de datos bloqueada
+            conn.close()
+
+
+
+
+# --- FUNCIONES PARA PERFILES PÚBLICOS DINÁMICOS ---
+
+def obtener_usuario_por_username(username):
+    """Busca cualquier tipo de usuario por su nombre exacto (el @)"""
+    conn = conectar()
+    # Trae todos los datos: id, nombre, tipo, descripcion, foto, etc.
+    usuario = conn.execute("SELECT * FROM usuarios WHERE nombre = ?", (username,)).fetchone()
+    conn.close()
+    return usuario

@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div>
+    <div class="grupo-formulario" style="display: flex; align-items: center; gap: 20px;">
+        {% if perfil.foto %}
+            <img src="{{ url_for('static', filename='uploads/' + perfil.foto) }}" class="foto-perfil-vista">
+        {% else %}
+            <div class="sin-foto">Sin Logo</div>
+        {% endif %}
+        
+        <div>
+            <h1>{{ perfil.nombre_completo or perfil.nombre }}</h1>
+            <p style="color: #718096; margin: 0;">Cuenta de Empresa Verificada</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <h3>Sobre nosotros</h3>
+    <p>
+        {{ perfil.descripcion or 'Esta empresa aún no ha añadido una descripción corporativa.' }}
+    </p>
+
+    <h3>Información de Contacto</h3>
+    <div>
+        {% for c in contactos %}
+            <span style="display: block; margin-bottom: 5px;">
+                <strong>{{ c.tipo_contacto }}:</strong> {{ c.valor }}
+            </span>
+        {% else %}
+            <p>No hay métodos de contacto registrados públicamente por esta empresa.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<hr style="margin-top: 30px;">
+
+<h3>Vacantes Activas Disponibles</h3>
+<div id="lista-vacantes-resumen">
+    {% for v in vacantes %}
+        <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+            <div>
+                <strong>{{ v.titulo }}</strong>
+                <span style="color: #718096;">({{ v.modalidad }})</span>
+                <div style="font-size: 0.9em; color: #4a5568; margin-top: 5px;">
+                    📍 {{ v.lugar }} | 🎓 Requisito: {{ v.nivel_educativo }}
+                </div>
+            </div>
+            <span style="color: #2ecc71; font-weight: bold;">Activa</span>
+        </div>
+    {% else %}
+        <p>Actualmente esta empresa no cuenta con vacantes publicadas.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

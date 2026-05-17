@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="perfil-cabecera" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+    {% if perfil.foto %}
+        <img src="{{ url_for('static', filename='uploads/' + perfil.foto) }}" class="foto-perfil-vista">
+    {% else %}
+        <div class="sin-foto">Sin foto</div>
+    {% endif %}
+    
+    <div>
+        <h1>{{ perfil.nombre_completo or perfil.nombre }}</h1>
+        <p style="color: #718096; margin: 0;">
+            <strong>Edad:</strong> {{ edad }} años | 
+            <strong>Género:</strong> {{ perfil.genero or 'No especificado' }}
+        </p>
+    </div>
+</div>
+
+<h3>Sobre mí</h3>
+<p>{{ perfil.descripcion or 'Este candidato aún no ha añadido una descripción personal.' }}</p>
+
+<hr>
+
+<h3>Experiencia Laboral</h3>
+<ul style="padding-left: 20px;">
+    {% for exp in experiencias %}
+        <li style="margin-bottom: 5px;"><strong>{{ exp.compania }}</strong>: {{ exp.puesto }} ({{ exp.ano }})</li>
+    {% else %}
+        <li>Este candidato aún no ha registrado experiencia laboral.</li>
+    {% endfor %}
+</ul>
+
+<hr>
+
+<h3>Educación</h3>
+<ul style="padding-left: 20px;">
+    {% for edu in educaciones %}
+        <li style="margin-bottom: 5px;"><strong>{{ edu.institucion }}</strong>: {{ edu.nivel }} ({{ edu.ano }})</li>
+    {% else %}
+        <li>Este candidato aún no ha registrado datos educativos.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
