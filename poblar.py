@@ -19,18 +19,29 @@ def poblar_sistema():
         # 1. DEFINICIÓN DE LAS 8 EMPRESAS
         # -------------------------------------------------------------------------
         empresas_demo = [
-            # 6 Empresas del sector Informática/Tecnología
             {"user": "netcore", "email": "contacto@netcore.com", "nombre": "NetCore Telecom", "desc": "Especialistas en redes, infraestructura de fibra óptica y conectividad empresarial."},
             {"user": "devsolutions", "email": "rrhh@devsolutions.dev", "nombre": "DevSolutions S.A.", "desc": "Fábrica de software enfocada en aplicaciones web, móviles y soluciones cloud."},
             {"user": "electrovolt", "email": "info@electrovolt.com", "nombre": "ElectroVolt Ingeniería", "desc": "Empresa de automatización eléctrica, sistemas embebidos y hardware industrial."},
             {"user": "cybershield", "email": "ops@cybershield.io", "nombre": "CyberShield Security", "desc": "Consultoría avanzada en ciberseguridad, hacking ético y auditorías SOC."},
             {"user": "datacrafters", "email": "jobs@datacrafters.ai", "nombre": "DataCrafters Analytics", "desc": "Modelado de datos, Big Data e implementación de Inteligencia Artificial."},
             {"user": "bytesupport", "email": "soporte@bytesupport.com", "nombre": "ByteSupport Global", "desc": "Soporte técnico integral, mantenimiento de servidores y Help Desk 24/7."},
-            
-            # 2 Empresas de consumo masivo (Nada que ver con tech)
             {"user": "cocacola", "email": "empleos@cocacola.com", "nombre": "Coca-Cola Femsa", "desc": "Líder global en la producción y distribución de bebidas refrescantes."},
             {"user": "mcdonalds", "email": "talento@mcdonalds.com", "nombre": "McDonald's Arcos Dorados", "desc": "Cadena internacional de restaurantes de servicio rápido y hospitalidad."}
         ]
+
+        # -------------------------------------------------------------------------
+        # NUEVO: DATOS DE CONTACTO FALSOS PARA CADA EMPRESA
+        # -------------------------------------------------------------------------
+        contactos_demo = {
+            "netcore": [("Teléfono", "+58 212-5551122"), ("Web", "https://netcore.com"), ("LinkedIn", "linkedin.com/company/netcore-telecom")],
+            "devsolutions": [("Teléfono", "+58 212-5553344"), ("Slack Public", "devsolutions-community.slack.com"), ("Web", "https://devsolutions.dev")],
+            "electrovolt": [("Teléfono", "+58 243-5557788"), ("Soporte", "soporte@electrovolt.com")],
+            "cybershield": [("Web", "https://cybershield.io"), ("Signal", "cybershield.sec.ops")],
+            "datacrafters": [("Web", "https://datacrafters.ai"), ("LinkedIn", "linkedin.com/company/datacrafters-ai")],
+            "bytesupport": [("Teléfono", "+58 251-5559900"), ("WhatsApp", "+58 412-5550011"), ("Web", "https://bytesupport.com")],
+            "cocacola": [("Teléfono", "+58 212-9991111"), ("Web", "https://coca-colafemsa.com"), ("Instagram", "@cocacolafemsa_ve")],
+            "mcdonalds": [("Teléfono", "+58 212-8882222"), ("Web", "https://mcdonalds.com.ve"), ("Instagram", "@mcdonalds_ve")]
+        }
 
         # Diccionario para mapear el usuario de la empresa con su ID generado en la BD
         empresa_ids = {}
@@ -47,14 +58,29 @@ def poblar_sistema():
                 empresa_ids[emp['user']] = cursor.lastrowid
                 print(f"✅ Empresa creada: {emp['nombre']} (ID: {cursor.lastrowid})")
             except sqlite3.IntegrityError:
-                # Si el usuario ya existe, lo buscamos para poder asignarle las vacantes de todos modos
+                # Si el usuario ya existe, lo buscamos para poder asignarle las vacantes y contactos
                 res = cursor.execute("SELECT id FROM usuarios WHERE nombre = ?", (emp['user'],)).fetchone()
                 empresa_ids[emp['user']] = res['id']
                 print(f"ℹ️ La empresa {emp['nombre']} ya existía (ID: {res['id']})")
 
+            # -------------------------------------------------------------------------
+            # NUEVO: INSERCIÓN DE LOS CONTACTOS ASOCIADOS A LA EMPRESA ACTUAL
+            # -------------------------------------------------------------------------
+            id_empresa = empresa_ids[emp['user']]
+            
+            # Primero limpiamos los contactos existentes de esta empresa para evitar duplicados si corres el script varias veces
+            cursor.execute("DELETE FROM contactos_empresa WHERE usuario_id = ?", (id_empresa,))
+            
+            # Insertamos la lista de contactos correspondientes
+            for tipo, valor in contactos_demo[emp['user']]:
+                cursor.execute('''
+                    INSERT INTO contactos_empresa (usuario_id, tipo_contacto, valor)
+                    VALUES (?, ?, ?)
+                ''', (id_empresa, tipo, valor))
+            print(f"   📞 Contactos agregados para {emp['nombre']}")
+
         # -------------------------------------------------------------------------
         # 2. DEFINICIÓN DE LAS 3 VACANTES POR EMPRESA (Total: 24 vacantes)
-        # Sincronizadas exactamente con: 'Bachiller', 'Certificaciones', 'Universitario'
         # -------------------------------------------------------------------------
         vacantes_demo = [
             # --- NetCore Telecom (Redes y Telecomunicaciones) ---
@@ -98,6 +124,9 @@ def poblar_sistema():
             {"empresa": "mcdonalds", "titulo": "Gerente de Turno de Restaurante", "lugar": "Valencia", "mod": "Presencial", "e_min": 24, "e_max": 38, "edu": "Certificaciones", "desc": "Liderazgo de equipos de atención rápidos, cuadre de cajas finales de turno, reportes de inventario diario y atención de reclamos."}
         ]
 
+        # Limpiamos las vacantes viejas para evitar que se dupliquen al re-ejecutar el script
+        cursor.execute("DELETE FROM solicitudes_trabajo")
+
         # Insertamos todas las vacantes asociándolas con el id correcto de su empresa
         for vac in vacantes_demo:
             id_empresa = empresa_ids[vac['empresa']]
@@ -108,7 +137,7 @@ def poblar_sistema():
             ''', (id_empresa, vac['titulo'], vac['desc'], vac['mod'], vac['e_min'], vac['e_max'], vac['edu'], vac['lugar']))
         
         conn.commit()
-        print(f"\n🎉 ¡Éxito rotundo! Se registraron las 8 empresas y {len(vacantes_demo)} vacantes de prueba.")
+        print(f"\n🎉 ¡Éxito rotundo! Se registraron las 8 empresas, sus contactos y las {len(vacantes_demo)} vacantes de prueba.")
 
     except Exception as e:
         print(f"❌ Error crítico al poblar la base de datos: {e}")

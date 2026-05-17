@@ -1,21 +1,4 @@
-nav {
-    background: #000000; 
-    padding: 15px;
-    text-align: center;
-}
 
-nav a {
-    color: white;
-    text-decoration: none;
-    margin: 0 15px;
-    font-weight: bold;
-    transition: color 0.3s;
-}
-
-nav a:hover {
-    color: #2ecc71; 
-    text-decoration: none;
-}
 
 
 button {
@@ -401,4 +384,39 @@ footer {
     height: 32px;       /* Ajusta la altura para que combine con el tamaño del texto */
     width: auto;        /* Mantiene la proporción original de la imagen para que no se aplaste */
     object-fit: contain;
+}
+
+
+@media (max-width: 600px) {
+    /* 1. Cambiamos la barra de fila (horizontal) a columna (vertical) */
+    .barra-navegacion {
+        flex-direction: column;
+        gap: 15px;             /* Separación entre el logo y los botones */
+        padding: 15px 20px;    /* Reducimos el espacio a los lados en pantallas chicas */
+    }
+
+    /* 2. Si los botones no caben en una línea, caen ordenadamente abajo sin aplastarse */
+    .menu-navegacion {
+        flex-wrap: wrap;       
+        justify-content: center; /* Centra los botones en el celular */
+        width: 100%;
+    }
+
+    /* 3. Hacemos que los botones se adapten mejor al espacio móvil */
+    .btn-nav {
+        font-size: 13px;       /* Letra ligeramente más pequeña para que quepa todo */
+        padding: 6px 12px;
+        text-align: center;
+    }
+    
+    /* 4. Ajuste extra: el bloque 'main' ocupará casi todo el ancho en celulares */
+    main {
+        margin: 15px;          /* Menos margen afuera para aprovechar la pantalla */
+        padding: 20px;         /* Espacio interno cómodo para el pulgar */
+    }
+    
+    /* Las tarjetas de tipo de cuenta se apilan verticalmente en móviles */
+    .contenedor-tipo-cuenta {
+        flex-direction: column;
+    }
 }
