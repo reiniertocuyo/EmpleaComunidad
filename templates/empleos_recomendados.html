@@ -44,10 +44,25 @@
                 Requisitos: {{ v.edad_minima }}-{{ v.edad_maxima }} años | {{ v.nivel_educativo }}
             </div>
             
-            <div >
-                <button onclick="location.href='/@{{ v.empresa_username }}'">
-                    Postularme ahora
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <!-- Botón para ver la empresa (Tu botón original corregido de ruta si querías ver perfil corporativo) -->
+                <button type="button" onclick="location.href='/@{{ v.empresa_username }}'">
+                    🏢 Ver Empresa
                 </button>
+
+                <!-- Lógica inteligente para el botón de Postulación -->
+                {% if v.id in mis_postulaciones %}
+                    <button type="button" style="background-color: #a0aec0; color: white; cursor: not-allowed;" disabled>
+                        ✓ Ya te postulaste
+                    </button>
+                {% else %}
+                    <form action="{{ url_for('postular', vacante_id=v.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" style="background-color: #2ecc71; color: white; font-weight: bold;">
+                            Postularme ahora
+                        </button>
+                    </form>
+                {% endif %}
+                
             </div>
         </div>
     {% else %}

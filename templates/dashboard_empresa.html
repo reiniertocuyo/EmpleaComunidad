@@ -52,12 +52,35 @@
 <h3>Mis Vacantes Activas</h3>
 <div id="lista-vacantes-resumen">
     {% for v in vacantes %}
-        <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <div>
+            <!-- Cabecera de la vacante -->
             <div>
-                <strong>{{ v.titulo }}</strong>
-                <span style="color: #718096;">({{ v.modalidad }})</span>
+                <div>
+                    <strong>{{ v.titulo }}</strong>
+                    <span>({{ v.modalidad }})</span>
+                </div>
+                <span>Activa</span>
             </div>
-            <span style="color: #2ecc71; font-weight: bold;">Activa</span>
+            
+            <!-- SUB-CONTENEDOR DE POSTULADOS ASOCIADOS -->
+            <div>
+                <strong>Candidatos Postulados:</strong>
+                
+                <ul>
+                    {% for p in v.postulados %}
+                        <li>
+                            <div>
+                                <span>{{ p.nombre_completo or p.nombre }}</span>
+                                <span>@{{ p.nombre }}</span>
+                            </div>
+                            <!-- Enlace directo usando tu función de perfil público -->
+                            <a href="/@{{ p.nombre }}">Ver Perfil ➔</a>
+                        </li>
+                    {% else %}
+                        <li>Aún no hay postulantes para esta oferta.</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     {% else %}
         <p>No tienes vacantes publicadas actualmente.</p>

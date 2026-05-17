@@ -66,7 +66,7 @@ def inicializar_db():
         )
         ''')
 
-        # 5. Tabla de Solicitudes de Trabajo
+        # 5. Tabla de Solicitudes de Trabajo (Tu código original)
         conn.execute('''
         CREATE TABLE IF NOT EXISTS solicitudes_trabajo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,9 +83,23 @@ def inicializar_db():
         )
         ''')
 
+        # --- NUEVA TABLA: 6. Postulaciones (Relación Muchos a Muchos) ---
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS postulaciones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            vacante_id INTEGER NOT NULL,
+            fecha_postulacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
+            FOREIGN KEY (vacante_id) REFERENCES solicitudes_trabajo (id),
+            UNIQUE(usuario_id, vacante_id) -- Evita que un usuario se postule dos veces a la misma vacante
+        )
+        ''')
+
         conn.commit()
     finally:
         conn.close()
+
 
 
 
@@ -360,3 +374,54 @@ def obtener_usuario_por_username(username):
         return usuario
     finally:
         conn.close()
+
+
+
+# --- NUEVAS FUNCIONES DE NEGOCIO EN DB_MANAGER ---
+
+def registrar_postulacion(usuario_id, vacante_id):
+    """Inserta un registro de postulación en la base de datos."""
+    conn = conectar()
+    try:
+        # Usamos INSERT OR IGNORE por seguridad debido al constraint UNIQUE
+        conn.execute("""
+            INSERT OR IGNORE INTO postulaciones (usuario_id, vacante_id) 
+            VALUES (?, ?)
+        """, (usuario_id, vacante_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error en registrar_postulacion: {e}")
+        return False
+    finally:
+        conn.close()
+
+def obtener_postulados_por_vacante(vacante_id):
+    """Devuelve la lista de usuarios que se han anexado a una vacante específica."""
+    conn = conectar()
+    try:
+        query = """
+            SELECT u.nombre, u.nombre_completo, u.foto
+            FROM postulaciones p
+            INNER JOIN usuarios u ON p.usuario_id = u.id
+            WHERE p.vacante_id = ?
+            ORDER BY p.fecha_postulacion DESC
+        """
+        return conn.execute(query, (vacante_id,)).fetchall()
+    except Exception as e:
+        print(f"Error en obtener_postulados_por_vacante: {e}")
+        return []
+    finally:
+        conn.close()
+
+def obtener_vacantes_postuladas_por_usuario(usuario_id):
+    """Devuelve una lista plana con los IDs de las vacantes a las que aplicó el usuario."""
+    conn = conectar()
+    try:
+        resultados = conn.execute("SELECT vacante_id FROM postulaciones WHERE usuario_id = ?", (usuario_id,)).fetchall()
+        return [r['vacante_id'] for r in resultados]
+    except Exception as e:
+        print(f"Error en obtener_vacantes_postuladas_por_usuario: {e}")
+        return []
+    finally:
+        conn.close() 
