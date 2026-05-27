@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <h2>💼 Mis Postulaciones Activas</h2>
+    <p style="color: #718096; margin-bottom: 25px;">Monitorea en tiempo real el estado de tus solicitudes de empleo y gestiona tus procesos de selección.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        {% for v in vacantes %}
+            <div style="background-color: white; border: 1px solid #e2e8f0; padding: 22px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; flex-wrap: wrap;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.25em; color: #2d3748;">{{ v.titulo }}</h3>
+                        <div style="margin-top: 4px; font-size: 0.95em; color: #4a5568;">
+                            🏢 Empresa: <strong style="color: #2d3748;">{{ v.empresa_nombre_real or v.empresa_username }}</strong>
+                        </div>
+                    </div>
+
+                    <div>
+                        {% if v.estado_tramite == 'Aceptado' %}
+                            <span style="background-color: #c6f6d5; color: #22543d; padding: 5px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9em;">
+                                🎉 ¡Aceptado! (Contratado)
+                            </span>
+                        {% elif v.estado_tramite == 'Rechazado' %}
+                            <span style="background-color: #fed7d7; color: #9b2c2c; padding: 5px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9em;">
+                                ❌ Proceso Finalizado
+                            </span>
+                        {% else %}
+                            <span style="background-color: #feebc8; color: #c05621; padding: 5px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9em;">
+                                ⏳ En Revisión
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; font-size: 0.85em; color: #718096; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">
+                    <span>📍 <strong>Lugar:</strong> {{ v.lugar or 'No especificado' }}</span>
+                    <span>💻 <strong>Modalidad:</strong> {{ v.modalidad }}</span>
+                    <span>💰 <strong>Sueldo:</strong> ${{ v.pago_monto }} / {{ v.pago_tipo }}</span>
+                </div>
+
+                <div style="margin-top: 12px; background-color: #f7fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #edf2f7;">
+                    <details style="cursor: pointer;">
+                        <summary style="font-weight: bold; color: #4a5568; font-size: 0.9em; outline: none; user-select: none;">
+                            📝 Revisar los detalles de la oferta guardada...
+                        </summary>
+                        <div style="margin-top: 10px; color: #4a5568; font-size: 0.95em; line-height: 1.5; cursor: default;">
+                            <p style="white-space: pre-line; margin-bottom: 10px;">{{ v.descripcion }}</p>
+                            <small style="color: #718096;">⚠️ Requisitos del puesto: Rangos de edad entre {{ v.edad_minima }}-{{ v.edad_maxima }} años con nivel educativo de "{{ v.nivel_educativo }}".</small>
+                        </div>
+                    </details>
+                </div>
+
+                <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+                    
+                    <a href="/@{{ v.empresa_username }}" style="text-decoration: none; border: 1px solid #cbd5e0; color: #4a5568; font-weight: bold; padding: 7px 14px; border-radius: 5px; font-size: 0.85em; background-color: white;">
+                        🏢 Ver Empresa
+                    </a>
+
+                    <button type="button" onclick="alert('Funcionalidad de mensajería en desarrollo. Próximamente podrás chatear directamente con esta corporación.')" style="background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; padding: 7px 14px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+                        📞 Contactar
+                    </button>
+
+                    {% if v.estado_tramite == 'Pendiente' or not v.estado_tramite %}
+                        <button type="button" onclick="retirarPostulacion({{ v.postulacion_id }})" style="background-color: white; color: #e53e3e; border: 1px solid #fed7d7; padding: 7px 14px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer;" onmouseover="this.style.backgroundColor='#fff5f5'" onmouseout="this.style.backgroundColor='white'">
+                            🚫 Desistir
+                        </button>
+                    {% endif %}
+
+                </div>
+
+            </div>
+        {% else %}
+            <div style="color: #a0aec0; font-style: italic; text-align: center; padding: 40px; background-color: #f7fafc; border-radius: 8px; border: 1px dashed #cbd5e0;">
+                📭 Aún no te has postulado a ninguna oferta de trabajo. ¡Explora la sección de vacantes para enviar tus primeras solicitudes!
+            </div>
+        {% endfor %}
+    </div>
+
+    <br><br>
+    <a href="{{ url_for('dashboard') }}" style="color: #4a5568; text-decoration: none; font-weight: bold;">← Volver a mi Escritorio</a>
+</div>
+
+<script>
+function retirarPostulacion(postulacionId) {
+    if (!confirm("¿Estás seguro de que deseas desistir de este proceso de selección? Tu postulación será eliminada y la empresa ya no tendrá acceso a tu currículum.")) return;
+
+    // Reutilizamos el endpoint genérico de eliminación que ya tienes en tu app.py
+    fetch(`/perfil/eliminar/postulaciones/${postulacionId}`, {
+        method: 'POST'
+    })
+    .then(res => {
+        if (res.ok) {
+            alert("Has retirado tu candidatura exitosamente.");
+            location.reload();
+        } else {
+            alert("No se pudo procesar la cancelación del trámite.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error de conexión con el servidor.");
+    });
+}
+</script>
+
+{% endblock %}

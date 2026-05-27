@@ -14,7 +14,7 @@ def conectar():
 def inicializar_db():
     conn = conectar()
     try:
-        # 1. Tabla de Usuarios (Añadimos 'foto' para guardar la ruta de la imagen)
+        # 1. Tabla de Usuarios (Añadimos 'estatus' con CHECK y 'cv_ruta')
         conn.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,9 @@ def inicializar_db():
             descripcion TEXT,
             genero TEXT,
             fecha_nacimiento TEXT,
-            foto TEXT -- Aquí guardaremos el nombre del archivo (ej: "usuario_1.png")
+            foto TEXT, -- Nombre del archivo de imagen (ej: "usuario_1.png")
+            estatus TEXT DEFAULT 'Disponible' CHECK(estatus IN ('Disponible', 'Inactivo', 'Contratado')),
+            cv_ruta TEXT -- Nombre del archivo PDF/PNG del Currículum (ej: "cv_1.pdf")
         )
         ''')
 
@@ -66,7 +68,7 @@ def inicializar_db():
         )
         ''')
 
-        # 5. Tabla de Solicitudes de Trabajo (Tu código original)
+        # 5. Tabla de Solicitudes de Trabajo (Añadimos pago_monto y pago_tipo obligatorios)
         conn.execute('''
         CREATE TABLE IF NOT EXISTS solicitudes_trabajo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,17 +80,20 @@ def inicializar_db():
             edad_maxima INTEGER,
             nivel_educativo TEXT,
             lugar TEXT,
+            pago_monto REAL NOT NULL, -- Obligatorio
+            pago_tipo TEXT NOT NULL CHECK(pago_tipo IN ('Por hora', 'Por día')), -- Obligatorio
             fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (empresa_id) REFERENCES usuarios (id)
         )
         ''')
 
-        # --- NUEVA TABLA: 6. Postulaciones (Relación Muchos a Muchos) ---
+        # 6. Postulaciones (Relación Muchos a Muchos)
         conn.execute('''
         CREATE TABLE IF NOT EXISTS postulaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             usuario_id INTEGER NOT NULL,
             vacante_id INTEGER NOT NULL,
+            estado TEXT DEFAULT 'Pendiente',
             fecha_postulacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
             FOREIGN KEY (vacante_id) REFERENCES solicitudes_trabajo (id),
@@ -101,32 +106,34 @@ def inicializar_db():
         conn.close()
 
 
-
-
 # --- GESTIÓN DE PERFIL GENERAL ---
 
 def actualizar_perfil(usuario_id, datos):
     """
-    Actualiza los datos básicos. 
-    'datos' puede incluir 'foto' si el usuario subió una nueva imagen.
+    Actualiza los datos básicos de personas o empresas. 
+    'datos' ahora puede incluir 'estatus' y 'cv_ruta'.
     """
     conn = conectar()
     try:
-        # Usamos COALESCE para la foto: si no viene en 'datos', mantiene la que ya estaba en la BD
+        # Agregamos COALESCE para cv_ruta y estatus para que mantengan su valor si no se envían nuevos datos
         conn.execute('''
             UPDATE usuarios SET 
                 nombre_completo = ?, 
                 descripcion = ?, 
                 genero = ?, 
                 fecha_nacimiento = ?,
-                foto = COALESCE(?, foto) 
+                foto = COALESCE(?, foto),
+                estatus = COALESCE(?, estatus),
+                cv_ruta = COALESCE(?, cv_ruta)
             WHERE id = ?
         ''', (
             datos['nombre_completo'], 
             datos['descripcion'], 
             datos.get('genero'), 
             datos.get('fecha_nacimiento'),
-            datos.get('foto'), # Ruta de la imagen
+            datos.get('foto'),
+            datos.get('estatus'),
+            datos.get('cv_ruta'),
             usuario_id
         ))
         conn.commit()
@@ -162,10 +169,11 @@ def obtener_contactos(usuario_id):
 def registrar_usuario(nombre, email, password, tipo='persona'):
     conn = conectar()
     try:
-        # Al registrarse, la foto empieza como NULL (puedes poner una por defecto luego en el HTML)
+        # Por defecto el estatus inicial para 'persona' es 'Disponible'
+        estatus_inicial = 'Disponible' if tipo == 'persona' else None
         conn.execute(
-            "INSERT INTO usuarios (nombre, email, password, tipo) VALUES (?, ?, ?, ?)", 
-            (nombre, email, password, tipo)
+            "INSERT INTO usuarios (nombre, email, password, tipo, estatus) VALUES (?, ?, ?, ?, ?)", 
+            (nombre, email, password, tipo, estatus_inicial)
         )
         conn.commit()
         return True
@@ -197,7 +205,14 @@ def obtener_usuario_por_token(token):
     conn = conectar()
     try:
         usuario = conn.execute("SELECT * FROM usuarios WHERE token = ?", (token,)).fetchone()
-        return usuario
+        
+        if usuario:
+            usuario_dict = dict(usuario)
+            if usuario_dict['tipo'] == 'persona':
+                # Llamamos a la función que acabamos de corregir
+                usuario_dict['estatus'] = obtener_estatus_real(usuario_dict['id'])
+            return usuario_dict
+        return None
     finally:
         conn.close()
 
@@ -254,18 +269,20 @@ def eliminar_item(tabla, item_id, usuario_id):
         conn.close()
 
 
-# vacantes de empresa y esas cosas
+# --- GESTIÓN DE VACANTES (SOLICITUDES DE TRABAJO) ---
+
 def crear_solicitud(empresa_id, datos):
     conn = conectar()
     try:
+        # Se añaden 'pago_monto' y 'pago_tipo' a la inserción obligatoria
         conn.execute('''
             INSERT INTO solicitudes_trabajo 
-            (empresa_id, titulo, descripcion, modalidad, edad_minima, edad_maxima, nivel_educativo, lugar)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (empresa_id, titulo, descripcion, modalidad, edad_minima, edad_maxima, nivel_educativo, lugar, pago_monto, pago_tipo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             empresa_id, datos['titulo'], datos['descripcion'], 
             datos['modalidad'], datos['edad_minima'], datos['edad_maxima'], 
-            datos['nivel_educativo'], datos['lugar']
+            datos['nivel_educativo'], datos['lugar'], datos['pago_monto'], datos['pago_tipo']
         ))
         conn.commit()
         return True
@@ -299,7 +316,7 @@ def eliminar_solicitud(solicitud_id, empresa_id):
 def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
     conn = conectar() 
     try:
-        # Seleccionamos los datos de la vacante y el nombre/nombre_completo de la empresa
+        # Ahora también traemos pago_monto y pago_tipo en el SELECT general
         query = """
             SELECT s.*, u.nombre AS empresa_username, u.nombre_completo AS empresa_nombre_real 
             FROM solicitudes_trabajo s
@@ -308,49 +325,33 @@ def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
         """
         params = []
 
-        # 1. Filtro por palabra clave (Título, Descripción o Lugar)
         if filtros and filtros.get('keyword'):
             query += " AND (s.titulo LIKE ? OR s.descripcion LIKE ? OR s.lugar LIKE ?)"
             lk = f"%{filtros['keyword']}%"
             params.extend([lk, lk, lk])
 
-        # 2. Filtro por Modalidad
         if filtros and filtros.get('modalidad'):
             query += " AND s.modalidad = ?"
             params.append(filtros['modalidad'])
 
-        # 3. Matching Automático
         if perfil_usuario:
-            # Filtro de Edad
             if perfil_usuario.get('edad'):
                 query += " AND (s.edad_minima <= ? AND s.edad_maxima >= ?)"
                 params.extend([perfil_usuario['edad'], perfil_usuario['edad']])
             
-            # --- CAMBIO LÓGICO AQUÍ: Filtro Educativo Acumulativo ---
-            # Intentamos leer la lista de niveles, o el nivel individual por compatibilidad
             niveles_edu = perfil_usuario.get('niveles_educativos') or perfil_usuario.get('nivel_educativo')
             
             if niveles_edu:
-                # Si llega como un solo string (un solo estudio), lo convertimos a lista automáticamente
                 if isinstance(niveles_edu, str):
                     niveles_edu = [niveles_edu]
                 
-                # Limpiamos de forma estricta strings vacíos o "Sin-especificar"
                 niveles_edu = [n for n in niveles_edu if n and n != "Sin-especificar"]
                 
-                # Si el usuario tiene estudios válidos en su lista
                 if niveles_edu:
-                    # Creamos dinámicamente tantos "?" como elementos tenga la lista
-                    # Ejemplo: si tiene 2 estudios, generará la cadena "?, ?"
                     placeholders = ', '.join(['?'] * len(niveles_edu))
-                    
-                    # Cambiamos el "=" por el operador "IN" de SQL
                     query += f" AND s.nivel_educativo IN ({placeholders})"
-                    
-                    # Agregamos todos los niveles al arreglo de parámetros de SQLite
                     params.extend(niveles_edu)
 
-        # Especificamos s.fecha_creacion para el ordenamiento
         query += " ORDER BY s.fecha_creacion DESC"
         
         resultados = conn.execute(query, params).fetchall()
@@ -366,24 +367,19 @@ def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
 # --- FUNCIONES PARA PERFILES PÚBLICOS DINÁMICOS ---
 
 def obtener_usuario_por_username(username):
-    """Busca cualquier tipo de usuario por su nombre exacto (el @)"""
     conn = conectar()
     try:
-        # Trae todos los datos: id, nombre, tipo, descripcion, foto, etc.
         usuario = conn.execute("SELECT * FROM usuarios WHERE nombre = ?", (username,)).fetchone()
         return usuario
     finally:
         conn.close()
 
 
-
-# --- NUEVAS FUNCIONES DE NEGOCIO EN DB_MANAGER ---
+# --- GESTIÓN DE POSTULACIONES Y MÉTRICAS ---
 
 def registrar_postulacion(usuario_id, vacante_id):
-    """Inserta un registro de postulación en la base de datos."""
     conn = conectar()
     try:
-        # Usamos INSERT OR IGNORE por seguridad debido al constraint UNIQUE
         conn.execute("""
             INSERT OR IGNORE INTO postulaciones (usuario_id, vacante_id) 
             VALUES (?, ?)
@@ -397,11 +393,12 @@ def registrar_postulacion(usuario_id, vacante_id):
         conn.close()
 
 def obtener_postulados_por_vacante(vacante_id):
-    """Devuelve la lista de usuarios que se han anexado a una vacante específica."""
     conn = conectar()
     try:
+        # Traemos el id de la postulación (como postulacion_id) y su estado real 
         query = """
-            SELECT u.nombre, u.nombre_completo, u.foto
+            SELECT p.id AS postulacion_id, p.estado AS estado_postulacion, 
+                   u.id AS usuario_id, u.nombre, u.nombre_completo, u.foto, u.estatus, u.cv_ruta
             FROM postulaciones p
             INNER JOIN usuarios u ON p.usuario_id = u.id
             WHERE p.vacante_id = ?
@@ -415,7 +412,6 @@ def obtener_postulados_por_vacante(vacante_id):
         conn.close()
 
 def obtener_vacantes_postuladas_por_usuario(usuario_id):
-    """Devuelve una lista plana con los IDs de las vacantes a las que aplicó el usuario."""
     conn = conectar()
     try:
         resultados = conn.execute("SELECT vacante_id FROM postulaciones WHERE usuario_id = ?", (usuario_id,)).fetchall()
@@ -425,3 +421,82 @@ def obtener_vacantes_postuladas_por_usuario(usuario_id):
         return []
     finally:
         conn.close() 
+
+def calcular_tasa_contratacion(empresa_id):
+    """
+    Calcula dinámicamente la tasa de contratación de una empresa basándose en 
+    el estatus actual de las personas que se han postulado a sus vacantes.
+    """
+    conn = conectar()
+    try:
+        # 1. Contamos el total de personas únicas postuladas a las vacantes de esta empresa
+        total_postulados = conn.execute("""
+            SELECT COUNT(DISTINCT p.usuario_id) 
+            FROM postulaciones p
+            INNER JOIN solicitudes_trabajo s ON p.vacante_id = s.id
+            WHERE s.empresa_id = ?
+        """, (empresa_id,)).fetchone()[0]
+
+        if total_postulados == 0:
+            return 0.0
+
+        # 2. Contamos cuántos de esos postulados específicos tienen estatus de 'Contratado'
+        total_contratados = conn.execute("""
+            SELECT COUNT(DISTINCT p.usuario_id) 
+            FROM postulaciones p
+            INNER JOIN solicitudes_trabajo s ON p.vacante_id = s.id
+            INNER JOIN usuarios u ON p.usuario_id = u.id
+            WHERE s.empresa_id = ? AND u.estatus = 'Contratado'
+        """, (empresa_id,)).fetchone()[0]
+
+        # Calculamos el porcentaje
+        porcentaje = (total_contratados / total_postulados) * 100
+        return round(porcentaje, 1)
+    except Exception as e:
+        print(f"Error al calcular tasa de contratación: {e}")
+        return 0.0
+    finally:
+        conn.close()
+
+
+
+def obtener_estatus_real(usuario_id):
+    conn = conectar()
+    try:
+        # IMPORTANTE: Asegúrate de que la tabla 'postulaciones' 
+        # tenga una columna llamada 'estado' y que exista el valor 'Aceptado'
+        contratacion = conn.execute("""
+            SELECT 1 FROM postulaciones 
+            WHERE usuario_id = ? AND estado = 'Aceptado' 
+            LIMIT 1
+        """, (usuario_id,)).fetchone()
+        
+        return 'Contratado' if contratacion else 'Disponible'
+    finally:
+        conn.close()
+
+
+def actualizar_estado_postulacion(postulacion_id, empresa_id, nuevo_estado):
+    """
+    Actualiza el estado de una postulación.
+    nuevo_estado debe ser 'Aceptado' o 'Rechazado'.
+    """
+    conn = conectar()
+    try:
+        # Verificamos primero que la vacante pertenezca realmente a la empresa 
+        # para evitar que una empresa modifique postulaciones ajenas
+        cursor = conn.execute("""
+            UPDATE postulaciones 
+            SET estado = ? 
+            WHERE id = ? AND vacante_id IN (
+                SELECT id FROM solicitudes_trabajo WHERE empresa_id = ?
+            )
+        """, (nuevo_estado, postulacion_id, empresa_id))
+        
+        conn.commit()
+        return cursor.rowcount > 0 # Retorna True si se actualizó algo
+    except Exception as e:
+        print(f"Error al actualizar estado: {e}")
+        return False
+    finally:
+        conn.close()

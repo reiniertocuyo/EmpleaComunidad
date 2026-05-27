@@ -10,9 +10,15 @@
     
     <div>
         <h1>{{ perfil.nombre_completo or perfil.nombre }}</h1>
-        <p style="color: #718096; margin: 0;">
+        <p style="color: #718096; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <strong>Edad:</strong> {{ edad }} años | 
-            <strong>Género:</strong> {{ perfil.genero or 'No especificado' }}
+            <strong>Género:</strong> {{ perfil.genero or 'No especificado' }} | 
+            <strong>Estatus:</strong> 
+            {% if perfil.estatus == 'Contratado' %}
+                <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="color: #E53E3E;">🔴</span> Contratado</span>
+            {% else %}
+                <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="color: #38A169;">🟢</span> Disponible</span>
+            {% endif %}
         </p>
     </div>
 </div>
@@ -20,7 +26,18 @@
 <h3>Sobre mí</h3>
 <p>{{ perfil.descripcion or 'Este candidato aún no ha añadido una descripción personal.' }}</p>
 
-<hr>
+<div style="margin-top: 15px; background-color: #ebf8ff; padding: 12px; border-radius: 6px; border: 1px solid #bee3f8;">
+    <strong>💼 Currículum Adjunto:</strong>
+    {% if perfil.cv_ruta %}
+        <a href="{{ url_for('static', filename='cvs/' + perfil.cv_ruta) }}" target="_blank" style="margin-left: 10px; color: #2b6cb0; font-weight: bold; text-decoration: underline;">
+            📄 Abrir / Descargar Currículum del Candidato
+        </a>
+    {% else %}
+        <span style="color: #718096; margin-left: 10px; font-style: italic;">El candidato no ha adjuntado un documento de CV.</span>
+    {% endif %}
+</div>
+
+<hr style="margin-top: 20px;">
 
 <h3>Experiencia Laboral</h3>
 <ul style="padding-left: 20px;">
@@ -41,5 +58,8 @@
         <li>Este candidato aún no ha registrado datos educativos.</li>
     {% endfor %}
 </ul>
+
+<br>
+<a href="javascript:history.back()">← Volver atrás</a>
 
 {% endblock %}

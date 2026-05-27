@@ -4,93 +4,47 @@
 <div>
     <div class="grupo-formulario" style="display: flex; align-items: center; gap: 20px;">
         {% if u.foto %}
-            <!-- Usamos la clase para que sea circular -->
             <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" class="foto-perfil-vista">
         {% else %}
-            <!-- Usamos la clase para el placeholder gris circular -->
             <div class="sin-foto">Sin Logo</div>
         {% endif %}
         
         <div>
             <h1>{{ u.nombre_completo or u.nombre }}</h1>
-            <p style="color: #718096; margin: 0;">Cuenta de Empresa</p>
+            <p style="color: #718096; margin: 0; font-weight: bold;">Cuenta de Empresa</p>
+            
+            <p style="margin: 5px 0 0 0; background-color: #ebf8ff; color: #2b6cb0; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 0.9em;">
+                📊 <strong>Tasa de Contratación:</strong> {{ tasa_contratacion | default('0.0') }}%
+            </p>
         </div>
     </div>
 
-    <hr>
+    <hr style="margin: 20px 0;">
 
     <h3>Sobre nosotros</h3>
-    <p>
-        {{ u.descripcion or 'Aún no has añadido una descripción de tu empresa.' }}
-    </p>
+    <p>{{ u.descripcion or 'Aún no has añadido una descripción de tu empresa.' }}</p>
 
-    <h3>Información de Contacto</h3>
-    <div>
+    <h3>Información de Contacto Obligatoria</h3>
+    <div style="background-color: #f7fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
         {% for c in contactos %}
             <span style="display: block; margin-bottom: 5px;">
-                <strong>{{ c.tipo_contacto }}:</strong> {{ c.valor }}
+                <strong>📌 {{ c.tipo_contacto }}:</strong> {{ c.valor }}
             </span>
         {% else %}
-            <p>No hay métodos de contacto registrados.</p>
+            <p style="color: #a0aec0; margin: 0; font-style: italic;">No hay métodos de contacto registrados.</p>
         {% endfor %}
     </div>
 
-    <!-- Contenedor de botones alineados -->
-    <div style="margin-top: 20px; display: flex; gap: 10px;">
+    <div style="margin-top: 25px; display: flex; gap: 10px;">
         <a href="{{ url_for('editar_perfil') }}">
             <button type="button">Editar Perfil Corporativo</button>
         </a>
         <a href="{{ url_for('logout') }}">
-            <!-- Le puse una clase especial para que el botón de cerrar sesión sea rojo (opcional) -->
-            <button type="button" class="btn-cerrar-sesion">Cerrar Sesión</button>
+            <button type="button" class="btn-cerrar-sesion" style="background-color: #e53e3e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                Cerrar Sesión
+            </button>
         </a>
     </div>
 </div>
-
-<hr style="margin-top: 30px;">
-
-<h3>Mis Vacantes Activas</h3>
-<div id="lista-vacantes-resumen">
-    {% for v in vacantes %}
-        <div>
-            <!-- Cabecera de la vacante -->
-            <div>
-                <div>
-                    <strong>{{ v.titulo }}</strong>
-                    <span>({{ v.modalidad }})</span>
-                </div>
-                <span>Activa</span>
-            </div>
-            
-            <!-- SUB-CONTENEDOR DE POSTULADOS ASOCIADOS -->
-            <div>
-                <strong>Candidatos Postulados:</strong>
-                
-                <ul>
-                    {% for p in v.postulados %}
-                        <li>
-                            <div>
-                                <span>{{ p.nombre_completo or p.nombre }}</span>
-                                <span>@{{ p.nombre }}</span>
-                            </div>
-                            <!-- Enlace directo usando tu función de perfil público -->
-                            <a href="/@{{ p.nombre }}">Ver Perfil ➔</a>
-                        </li>
-                    {% else %}
-                        <li>Aún no hay postulantes para esta oferta.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    {% else %}
-        <p>No tienes vacantes publicadas actualmente.</p>
-    {% endfor %}
-</div>
-
-<a href="{{ url_for('gestionar_vacantes') }}">
-    <button type="button">
-        + Gestionar / Publicar Vacantes
-    </button>
-</a>
 
 {% endblock %}

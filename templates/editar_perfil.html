@@ -4,19 +4,28 @@
 <h2>Información Básica</h2>
 <form id="formPerfil" enctype="multipart/form-data">
     
-    <!-- Visualización de la foto actual -->
-    <div >
+    <div>
         <label>Foto de Perfil Actual:</label><br>
         {% if u.foto %}
-            <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="150" >
+            <img src="{{ url_for('static', filename='uploads/' + u.foto) }}" width="150">
         {% else %}
-            <div >
-                Sin foto
-            </div>
+            <div>Sin foto</div>
         {% endif %}
         <br><br>
         <label>Cambiar foto:</label>
         <input type="file" id="foto" name="foto" accept="image/*">
+    </div><br>
+
+    <div>
+        <label>Currículum Actual (PDF o Imagen):</label><br>
+        {% if u.cv_ruta %}
+            <a href="{{ url_for('static', filename='cvs/' + u.cv_ruta) }}" target="_blank">📄 Ver currículum actual</a>
+        {% else %}
+            <div>No has subido ningún currículum aún.</div>
+        {% endif %}
+        <br><br>
+        <label>Subir o cambiar Currículum:</label>
+        <input type="file" id="cv" name="cv" accept=".pdf,image/*">
     </div><br>
 
     <div>
@@ -58,7 +67,7 @@
     {% endfor %}
 </div>
 
-<div >
+<div>
     <h4>Añadir nueva experiencia:</h4>
     <input type="text" id="exp_compania" placeholder="Compañía">
     <input type="text" id="exp_puesto" placeholder="Puesto">
@@ -94,34 +103,39 @@
 </div>
 
 <br>
-<a href="{{ url_for('dashboard') }}" >← Volver al Dashboard</a>
+<a href="{{ url_for('dashboard') }}">← Volver al Dashboard</a>
 
 <script>
-// 1. GUARDAR DATOS BÁSICOS (Incluyendo Foto)
+// 1. GUARDAR DATOS BÁSICOS (Incluyendo Foto y CV)
 document.getElementById('formPerfil').onsubmit = async (e) => {
     e.preventDefault();
     
-    // IMPORTANTE: Para enviar archivos usamos FormData
     const formData = new FormData();
     formData.append('nombre_completo', document.getElementById('nombre_completo').value);
     formData.append('descripcion', document.getElementById('descripcion').value);
     formData.append('genero', document.getElementById('genero').value);
     formData.append('fecha_nacimiento', document.getElementById('fecha_nacimiento').value);
     
+    // Captura de la Foto
     const fotoInput = document.getElementById('foto');
     if (fotoInput.files[0]) {
         formData.append('foto', fotoInput.files[0]);
     }
 
+    // Captura del CV (¡NUEVO!)
+    const cvInput = document.getElementById('cv');
+    if (cvInput && cvInput.files[0]) {
+        formData.append('cv', cvInput.files[0]);
+    }
+
     const resp = await fetch('/perfil/editar', {
         method: 'POST',
-        // NOTA: Con FormData NO se pone el header 'Content-Type'
         body: formData
     });
     
     if(resp.ok) {
-        alert("¡Perfil actualizado!");
-        location.reload(); // Recargamos para ver la nueva foto
+        alert("¡Perfil actualizado con éxito!");
+        location.reload(); 
     } else {
         alert("Error al actualizar perfil");
     }

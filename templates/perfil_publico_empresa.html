@@ -11,7 +11,7 @@
         
         <div>
             <h1>{{ perfil.nombre_completo or perfil.nombre }}</h1>
-            <p style="color: #718096; margin: 0;">Cuenta de Empresa Verificada</p>
+            <p style="color: #718096; margin: 0; font-weight: bold;">🏢 Cuenta de Empresa Verificada</p>
         </div>
     </div>
 
@@ -22,14 +22,14 @@
         {{ perfil.descripcion or 'Esta empresa aún no ha añadido una descripción corporativa.' }}
     </p>
 
-    <h3>Información de Contacto</h3>
-    <div>
+    <h3>Información de Contacto Directo</h3>
+    <div style="background-color: #f7fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
         {% for c in contactos %}
             <span style="display: block; margin-bottom: 5px;">
-                <strong>{{ c.tipo_contacto }}:</strong> {{ c.valor }}
+                <strong>📌 {{ c.tipo_contacto }}:</strong> {{ c.valor }}
             </span>
         {% else %}
-            <p>No hay métodos de contacto registrados públicamente por esta empresa.</p>
+            <p style="color: #a0aec0; margin: 0; font-style: italic;">No hay métodos de contacto registrados públicamente por esta empresa.</p>
         {% endfor %}
     </div>
 </div>
@@ -37,21 +37,28 @@
 <hr style="margin-top: 30px;">
 
 <h3>Vacantes Activas Disponibles</h3>
-<div id="lista-vacantes-resumen">
+<div id="lista-vacantes-resumen" style="display: flex; flex-direction: column; gap: 12px;">
     {% for v in vacantes %}
-        <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <div style="background: #f5f7fa; padding: 15px; border-radius: 10px; border: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <strong>{{ v.titulo }}</strong>
-                <span style="color: #718096;">({{ v.modalidad }})</span>
+                <strong style="font-size: 1.1em; color: #2d3748;">{{ v.titulo }}</strong>
+                <span style="color: #718096; margin-left: 5px;">({{ v.modalidad }})</span>
+                
                 <div style="font-size: 0.9em; color: #4a5568; margin-top: 5px;">
-                    📍 {{ v.lugar }} | 🎓 Requisito: {{ v.nivel_educativo }}
+                    📍 Ubicación: {{ v.lugar }} | 🎓 Nivel requerido: {{ v.nivel_educativo }}
+                </div>
+                <div style="font-size: 0.9em; color: #dd6b20; font-weight: bold; margin-top: 3px;">
+                    <p><strong>💵 Remuneración Ofertada:</strong> ${{ v.pago_monto }} / {{ v.pago_tipo }}</p>
                 </div>
             </div>
-            <span style="color: #2ecc71; font-weight: bold;">Activa</span>
+            <span style="color: #2ecc71; font-weight: bold; background-color: #e6fffa; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">Activa</span>
         </div>
     {% else %}
-        <p>Actualmente esta empresa no cuenta con vacantes publicadas.</p>
+        <p style="color: #a0aec0; font-style: italic;">Actualmente esta empresa no cuenta con vacantes publicadas en el sistema.</p>
     {% endfor %}
 </div>
+
+<br>
+<a href="javascript:history.back()">← Volver atrás</a>
 
 {% endblock %}

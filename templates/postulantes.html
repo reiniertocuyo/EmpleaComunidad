@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <h2>👤 Centro de Evaluación de Candidatos</h2>
+    <p style="color: #718096; margin-bottom: 25px;">Revisa las carpetas, descarga los currículums y gestiona el ingreso de los nuevos integrantes a la comunidad.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% set tracking_postulantes = namespace(tiene_postulados=false) %}
+
+        {% for v in vacantes %}
+            {% for p in v.postulados %}
+                {% set tracking_postulantes.tiene_postulados = true %}
+                
+                <div style="background-color: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+                    
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong style="font-size: 1.15em; color: #2d3748;">{{ p.nombre_completo or p.nombre }}</strong>
+                            <span style="color: #a0aec0; font-size: 0.9em;">@{{ p.nombre }}</span>
+                        </div>
+                        
+                        <div style="margin-top: 5px; font-size: 0.95em; color: #4a5568;">
+                            📌 Postulado al puesto de: <strong style="color: #2b6cb0;">{{ v.titulo }}</strong>
+                        </div>
+
+                        <div style="margin-top: 8px; font-size: 0.9em;">
+                            {% if p.estado_postulacion == 'Aceptado' %}
+                                <span style="background-color: #c6f6d5; color: #22543d; padding: 3px 10px; border-radius: 12px; font-weight: bold;">
+                                    ✅ Contratado
+                                </span>
+                            {% elif p.estado_postulacion == 'Rechazado' %}
+                                <span style="background-color: #fed7d7; color: #9b2c2c; padding: 3px 10px; border-radius: 12px; font-weight: bold;">
+                                    ❌ No seleccionado
+                                </span>
+                            {% else %}
+                                <span style="background-color: #feebc8; color: #c05621; padding: 3px 10px; border-radius: 12px; font-weight: bold;">
+                                    ⏳ Pendiente por Evaluar
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                        
+                        {% if p.cv_ruta %}
+                            <a href="{{ url_for('static', filename='cvs/' ~ p.cv_ruta) }}" target="_blank" style="color: #3182ce; font-weight: bold; text-decoration: none; font-size: 0.95em; background-color: #ebf8ff; padding: 5px 12px; border-radius: 4px; border: 1px solid #bee3f8;">
+                                📄 Abrir Currículum (CV) ➔
+                            </a>
+                        {% else %}
+                            <span style="color: #a0aec0; font-style: italic; font-size: 0.9em; background-color: #edf2f7; padding: 5px 12px; border-radius: 4px;">
+                                ⚠️ Sin CV adjunto
+                            </span>
+                        {% endif %}
+
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            {% if p.estado_postulacion == 'Pendiente' or not p.estado_postulacion %}
+                                <button type="button" onclick="procesarCandidato({{ p.postulacion_id }}, 'aceptar')" style="background-color: #38a169; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
+                                    Aceptar
+                                </button>
+                                <button type="button" onclick="procesarCandidato({{ p.postulacion_id }}, 'rechazar')" style="background-color: #e53e3e; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
+                                    Rechazar
+                                </button>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% if not tracking_postulantes.tiene_postulados %}
+            <div style="color: #a0aec0; font-style: italic; text-align: center; padding: 35px; background-color: #f7fafc; border-radius: 8px; border: 1px dashed #cbd5e0;">
+                📭 De momento no hay candidatos registrados en ninguna de tus ofertas de empleo vigentes.
+            </div>
+        {% endif %}
+    </div>
+
+    <br><br>
+    <a href="{{ url_for('dashboard') }}" style="color: #4a5568; text-decoration: none; font-weight: bold;">← Volver al Panel de Inicio</a>
+</div>
+
+<script>
+function procesarCandidato(postulacionId, accion) {
+    const mensajeConfirmacion = accion === 'aceptar' 
+        ? '¿Confirmas que deseas ACEPTAR a este candidato? Su estado pasará a Contratado.' 
+        : '¿Estás seguro de que deseas RECHAZAR a este postulante?';
+
+    if (!confirm(mensajeConfirmacion)) return;
+    
+    fetch(`/empresa/gestionar_postulacion/${postulacionId}/${accion}`, { method: 'POST' })
+    .then(res => {
+        if (res.ok) {
+            alert(`Candidato evaluado correctamente.`);
+            location.reload();
+        } else {
+            alert("No se pudo procesar la acción.");
+        }
+    })
+    .catch(err => {
+        alert("Ocurrió un fallo en la conexión.");
+    });
+}
+</script>
+
+{% endblock %}

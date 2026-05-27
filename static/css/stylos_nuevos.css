@@ -1,0 +1,59 @@
+/* Alineación del contenedor del avatar dentro del menú */
+.menu-navegacion {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Contenedor del enlace de la foto */
+.enlace-perfil-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.enlace-perfil-nav:hover {
+    transform: scale(1.05); /* Efecto sutil al pasar el mouse */
+}
+
+/* Foto de perfil circular en el menú */
+.foto-nav-circular {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #2ecc71; /* Borde verde que combina con la paleta */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Inicial de repuesto si el usuario no tiene foto guardada */
+.sin-foto-nav-circular {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #2ecc71;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Forzamos al body a ocupar toda la pantalla y distribuirse en 3 filas */
+body {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    margin: 0; /* Asegura que no haya márgenes extraños */
+}
+
+/* Con esto, si el main tiene poco contenido, se estirará mágicamente 
+   para empujar al footer hasta el fondo de la pantalla */
+main {
+    width: 100%;
+}
