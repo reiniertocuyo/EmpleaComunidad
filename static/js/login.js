@@ -1,16 +1,29 @@
-// Esperamos a que el HTML esté totalmente cargado
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
+    const usuarioInput = document.getElementById('usuario');
+
+    // --- NUEVA MEJORA: LIMPIEZA EN TIEMPO REAL ---
+    if (usuarioInput) {
+        usuarioInput.addEventListener('input', () => {
+            // Convierte a minúsculas y elimina cualquier carácter que no sea a-z o 0-9
+            usuarioInput.value = usuarioInput.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+        });
+    }
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
-            // 1. EVITAR QUE LA PAGINA SE RECARGUE
             e.preventDefault();
 
-            // 2. RECOGER LOS DATOS DEL FORMULARIO
+            // La validación del submit sigue siendo útil como doble seguridad, 
+            // aunque con el 'input' de arriba, el usuario ya no podrá escribir caracteres prohibidos.
+            const patron = /^[a-z0-9]+$/;
+            if (!patron.test(usuarioInput.value)) {
+                alert("Usuario no válido.");
+                return;
+            }
+
             const formData = new FormData(loginForm);
 
-            // 3. ENVIAR LOS DATOS A FLASK POR "DETRÁS" (AJAX)
             try {
                 const response = await fetch('/login', {
                     method: 'POST',
@@ -20,15 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Si Flask dice que todo está bien, vamos al dashboard
                     window.location.href = result.redirect;
                 } else {
-                    // SI HAY ERROR: Mostramos el mensaje emergente del navegador
-                    // Puedes cambiar alert() por algo más bonito luego
-                    alert("Error de inicio de sesión: " + result.message);
+                    alert("Error: " + result.message);
                 }
             } catch (error) {
-                alert("Ocurrió un error en la conexión.");
+                alert("Error de conexión.");
             }
         });
     }

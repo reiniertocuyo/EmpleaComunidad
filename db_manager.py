@@ -325,14 +325,24 @@ def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
         """
         params = []
 
-        if filtros and filtros.get('keyword'):
-            query += " AND (s.titulo LIKE ? OR s.descripcion LIKE ? OR s.lugar LIKE ?)"
-            lk = f"%{filtros['keyword']}%"
-            params.extend([lk, lk, lk])
+        if filtros:
+            if filtros.get('keyword'):
+                query += " AND (s.titulo LIKE ? OR s.descripcion LIKE ? OR s.lugar LIKE ?)"
+                lk = f"%{filtros['keyword']}%"
+                params.extend([lk, lk, lk])
 
-        if filtros and filtros.get('modalidad'):
-            query += " AND s.modalidad = ?"
-            params.append(filtros['modalidad'])
+            if filtros.get('modalidad'):
+                query += " AND s.modalidad = ?"
+                params.append(filtros['modalidad'])
+
+            # --- NUEVOS FILTROS DE PAGO ---
+            if filtros.get('pago_min'):
+                query += " AND s.pago_monto >= ?"
+                params.append(filtros['pago_min'])
+
+            if filtros.get('pago_tipo'):
+                query += " AND s.pago_tipo = ?"
+                params.append(filtros['pago_tipo'])
 
         if perfil_usuario:
             if perfil_usuario.get('edad'):
@@ -362,6 +372,7 @@ def obtener_solicitudes_busqueda(filtros=None, perfil_usuario=None):
         return []
     finally:
         conn.close()
+
 
 
 # --- FUNCIONES PARA PERFILES PÚBLICOS DINÁMICOS ---

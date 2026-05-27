@@ -4,7 +4,8 @@
 <div style="max-width: 900px; margin: 0 auto;">
     
     <div style="background-color: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px;">
-        <form action="{{ url_for('empleos_buscar') }}" method="GET" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <form action="{{ url_for('empleos_buscar') }}" method="GET" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            
             <input type="text" name="q" placeholder="🔍 Buscar por puesto, palabra clave o lugar..." 
                    value="{{ busqueda_actual or '' }}" 
                    style="flex: 2; min-width: 250px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
@@ -15,8 +16,18 @@
                 <option value="Remoto" {% if modalidad_actual == 'Remoto' %}selected{% endif %}>💻 Remoto</option>
                 <option value="Híbrido" {% if modalidad_actual == 'Híbrido' %}selected{% endif %}>⏳ Híbrido</option>
             </select>
+
+            <input type="number" name="pago_min" placeholder="💰 Pago mínimo ($)..." step="any" min="0"
+                   value="{{ pago_min_actual or '' }}"
+                   style="flex: 1; min-width: 150px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+
+            <select name="pago_tipo" style="flex: 1; min-width: 150px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em; background-color: white;">
+                <option value="">⏱️ Frecuencia pago</option>
+                <option value="Por hora" {% if pago_tipo_actual == 'Por hora' %}selected{% endif %}>🕒 Por hora</option>
+                <option value="Por día" {% if pago_tipo_actual == 'Por día' %}selected{% endif %}>📆 Por día</option>
+            </select>
             
-            <button type="submit" style="background-color: #3182ce; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95em;">
+            <button type="submit" style="background-color: #3182ce; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95em; min-width: 140px;">
                 Buscar Ofertas
             </button>
         </form>

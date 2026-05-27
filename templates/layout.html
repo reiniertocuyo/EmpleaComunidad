@@ -41,7 +41,8 @@
 
             {% else %}
                 {# === MENÚ SIN SESIÓN ACTIVA (SE MANTIENE IGUAL) === #}
-                <a href="{{ url_for('index') }}" class="btn-nav">Inicio</a> 
+                <a href="{{ url_for('index') }}" class="btn-nav">Bienvenido</a>
+                <a href="{{ url_for('pag_login') }}" class="btn-nav">Iniciar Sesión</a> 
                 <a href="{{ url_for('registro') }}" class="btn-nav btn-destacado">Registrarse</a>
             {% endif %}
         </nav>

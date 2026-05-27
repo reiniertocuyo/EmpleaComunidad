@@ -57,3 +57,33 @@ body {
 main {
     width: 100%;
 }
+
+
+
+
+/* Clase única y aislada para el login */
+.campo-usuario-especial {
+    display: flex;
+    align-items: center;
+    background-color: #f5f7fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 25px;
+    margin: 12px 0 20px 0;
+    padding: 0 20px;
+}
+
+/* Solo afecta al input que esté DENTRO de esta clase específica */
+.campo-usuario-especial input {
+    margin: 0;
+    border: none !important; /* Forzamos a que no herede bordes externos */
+    background: transparent !important;
+    padding: 12px 10px !important;
+    width: 100%;
+}
+
+/* Símbolo con estilo dedicado */
+.campo-usuario-especial .simbolo {
+    color: #718096;
+    font-weight: bold;
+    user-select: none;
+}
