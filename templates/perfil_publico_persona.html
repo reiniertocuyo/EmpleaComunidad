@@ -10,6 +10,7 @@
     
     <div>
         <h1>{{ perfil.nombre_completo or perfil.nombre }}</h1>
+        <p style="color: #4A5568; font-weight: 600; font-size: 1.1em; margin: -25px 0 5px 0;"> @{{ perfil.nombre }} </p>
         <p style="color: #718096; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <strong>Edad:</strong> {{ edad }} años | 
             <strong>Género:</strong> {{ perfil.genero or 'No especificado' }} | 

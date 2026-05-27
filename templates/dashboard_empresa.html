@@ -11,6 +11,7 @@
         
         <div>
             <h1>{{ u.nombre_completo or u.nombre }}</h1>
+            <p style="color: #4A5568; font-weight: 600; font-size: 1.1em; margin: -25px 0 5px 0;"> @{{ u.nombre }} </p>
             <p style="color: #718096; margin: 0; font-weight: bold;">Cuenta de Empresa</p>
             
             <p style="margin: 5px 0 0 0; background-color: #ebf8ff; color: #2b6cb0; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 0.9em;">
@@ -40,9 +41,7 @@
             <button type="button">Editar Perfil Corporativo</button>
         </a>
         <a href="{{ url_for('logout') }}">
-            <button type="button" class="btn-cerrar-sesion" style="background-color: #e53e3e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
-                Cerrar Sesión
-            </button>
+            <button type="button" class="btn-cerrar-sesion">Cerrar sesión</button>
         </a>
     </div>
 </div>

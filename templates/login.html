@@ -10,10 +10,14 @@
         </div>
 
         <label>Contraseña:</label><br>
-        <input type="password" name="password" required><br><br>
+        <input type="password" name="password" required><br>
+
+        <a href="/olvide_password">¿Olvidaste tu contraseña?</a> <br><br>
         
         <button type="submit">Entrar</button>
     </form>
+
+
 
 <script src="{{ url_for('static', filename='js/login.js') }}"></script>
 {% endblock %}

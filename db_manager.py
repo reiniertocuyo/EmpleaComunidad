@@ -511,3 +511,60 @@ def actualizar_estado_postulacion(postulacion_id, empresa_id, nuevo_estado):
         return False
     finally:
         conn.close()
+
+
+
+# === NUEVAS FUNCIONES PARA EL SISTEMA DE CORREO ===
+
+def obtener_detalle_postulacion(postulacion_id):
+    """
+    Trae el email y nombre del candidato, además del título de la vacante,
+    usando únicamente el id de la postulación.
+    """
+    conn = conectar()
+    try:
+        query = """
+            SELECT u.email, u.nombre_completo AS nombre_usuario, s.titulo AS titulo_vacante
+            FROM postulaciones p
+            INNER JOIN usuarios u ON p.usuario_id = u.id
+            INNER JOIN solicitudes_trabajo s ON p.vacante_id = s.id
+            WHERE p.id = ?
+        """
+        resultado = conn.execute(query, (postulacion_id,)).fetchone()
+        return dict(resultado) if resultado else None
+    except Exception as e:
+        print(f"Error en obtener_detalle_postulacion: {e}")
+        return None
+    finally:
+        conn.close()
+
+def obtener_usuario_por_email(email):
+    """
+    Busca un usuario por su correo electrónico para el flujo de recuperación.
+    """
+    conn = conectar()
+    try:
+        usuario = conn.execute("SELECT * FROM usuarios WHERE email = ?", (email,)).fetchone()
+        return dict(usuario) if usuario else None
+    except Exception as e:
+        print(f"Error en obtener_usuario_por_email: {e}")
+        return None
+    finally:
+        conn.close()
+
+def actualizar_password_usuario(usuario_id, nueva_pw):
+    """
+    Sobrescribe la contraseña de un usuario usando su ID.
+    Nota: Como estás guardando las claves en texto plano en 'verificar_usuario',
+    aquí la guardamos directamente igual para mantener la consistencia de tu proyecto.
+    """
+    conn = conectar()
+    try:
+        conn.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nueva_pw, usuario_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error en actualizar_password_usuario: {e}")
+        return False
+    finally:
+        conn.close()
