@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto; font-family: sans-serif;">
+    <h2>Redactar Correo</h2>
+    <a href="{{ url_for('bandeja_mensajes') }}" style="display: inline-block; margin-bottom: 15px;"><- Volver a la bandeja</a>
+
+    <form action="{{ url_for('redactar_mensaje') }}" method="POST" style="background: #fdfdfd; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Para (Nombre de usuario):</label>
+            <input type="text" name="destinatario" value="{{ pre_destinatario }}" required placeholder="ej: empresa_patito" style="width: 100%; padding: 8px; box-sizing: border-box;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Asunto:</label>
+            <input type="text" name="asunto" required placeholder="Asunto del correo" style="width: 100%; padding: 8px; box-sizing: border-box;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Mensaje:</label>
+            <textarea name="contenido" rows="8" required placeholder="Escribe el cuerpo de tu mensaje aquí..." style="width: 100%; padding: 8px; box-sizing: border-box;"></textarea>
+        </div>
+
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; font-size: 1a;">Enviar Correo</button>
+    </form>
+</div>
+{% endblock %}

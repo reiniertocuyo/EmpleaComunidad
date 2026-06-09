@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+<div style="max-width: 800px; margin: 20px auto; font-family: sans-serif;">
+    <h2>Bandeja de Correos (No leídos: {{ no_leidos }})</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('bandeja_mensajes', filtro='recibidos') }}" style="margin-right: 15px; font-weight: {% if filtro == 'recibidos' %}bold{% else %}normal{% endif %};">Recibidos</a>
+        <a href="{{ url_for('bandeja_mensajes', filtro='enviados') }}" style="margin-right: 15px; font-weight: {% if filtro == 'enviados' %}bold{% else %}normal{% endif %};">Enviados</a>
+        <a href="{{ url_for('redactar_mensaje') }}" style="background: #007bff; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px;">+ Redactar Nuevo</a>
+    </div>
+
+    <div style="margin-bottom: 15px; font-size: 0.9em;">
+        Ordenar por fecha: 
+        <a href="?orden=recientes" style="{% if orden_actual == 'recientes' %}font-weight:bold;{% endif %}">Más recientes</a> | 
+        <a href="?orden=antiguos" style="{% if orden_actual == 'antiguos' %}font-weight:bold;{% endif %}">Más antiguos</a>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f4f4f4; border-bottom: 2px solid #ccc;">
+                <th style="padding: 10px; text-align: left;">{% if filtro == 'enviados' %}Para{% else %}De{% endif %}</th>
+                <th style="padding: 10px; text-align: left;">Asunto</th>
+                <th style="padding: 10px; text-align: left;">Fecha</th>
+                <th style="padding: 10px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in mensajes %}
+            <tr style="border-bottom: 1px solid #ddd; {% if m.leido == 0 and filtro == 'recibidos' %}font-weight: bold; background: #f9f9f9;{% endif %}">
+                <td style="padding: 10px;">
+                    {% if filtro == 'enviados' %}
+                        {{ m.nombre_real_destinatario or m.nombre_destinatario }}
+                    {% else %}
+                        {{ m.nombre_real_remitente or m.nombre_remitente }}
+                    {% endif %}
+                </td>
+                <td style="padding: 10px;">
+                    <a href="{{ url_for('leer_mensaje', mensaje_id=m.id) }}" style="color: #333; text-decoration: none;">
+                        {{ m.asunto or '(Sin Asunto)' }}
+                    </a>
+                </td>
+                <td style="padding: 10px; font-size: 0.9em; color: #666;">{{ m.fecha }}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <form action="{{ url_for('ruta_eliminar_mensaje', mensaje_id=m.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este correo?');">
+                        <button type="submit" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="padding: 20px; text-align: center; color: #777;">No hay mensajes en esta bandeja.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

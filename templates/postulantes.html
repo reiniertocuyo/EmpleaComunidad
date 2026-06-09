@@ -55,6 +55,9 @@
 
                         <div style="display: flex; gap: 8px; margin-top: 5px;">
                             {% if p.estado_postulacion == 'Pendiente' or not p.estado_postulacion %}
+                                <button type="button" onclick="window.location.href='{{ url_for('redactar_mensaje', para=p.nombre) }}'" style="background-color: #f7fafc; color: #4a5568; border: 1px solid #cbd5e0; padding: 6px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; cursor: pointer;">
+                                    ✉️ Contactar
+                                </button>
                                 <button type="button" onclick="procesarCandidato({{ p.postulacion_id }}, 'aceptar')" style="background-color: #38a169; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
                                     Aceptar
                                 </button>

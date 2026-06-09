@@ -25,6 +25,7 @@ def inicializar_db():
             tipo TEXT NOT NULL DEFAULT 'persona', -- 'persona' o 'empresa'
             nombre_completo TEXT,
             descripcion TEXT,
+            nombre_administrador TEXT,
             genero TEXT,
             fecha_nacimiento TEXT,
             foto TEXT, -- Nombre del archivo de imagen (ej: "usuario_1.png")
@@ -100,6 +101,22 @@ def inicializar_db():
             UNIQUE(usuario_id, vacante_id) -- Evita que un usuario se postule dos veces a la misma vacante
         )
         ''')
+
+        # 7. Tabla de Mensajes (INYECTAR ESTE BLOQUE COMPLETO)
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS mensajes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            remitente_id INTEGER NOT NULL,
+            destinatario_id INTEGER NOT NULL,
+            asunto TEXT,
+            contenido TEXT NOT NULL,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            leido INTEGER DEFAULT 0 CHECK(leido IN (0, 1)), -- 0 = No leído, 1 = Leído
+            FOREIGN KEY (remitente_id) REFERENCES usuarios (id),
+            FOREIGN KEY (destinatario_id) REFERENCES usuarios (id)
+        )
+        ''')
+
 
         conn.commit()
     finally:
@@ -566,5 +583,169 @@ def actualizar_password_usuario(usuario_id, nueva_pw):
     except Exception as e:
         print(f"Error en actualizar_password_usuario: {e}")
         return False
+    finally:
+        conn.close()
+
+
+
+
+# --- SISTEMA DE MENSAJERÍA ---
+
+def crear_mensaje(remitente_id, destinatario_username, asunto, contenido):
+    """
+    Crea un nuevo mensaje traduciendo el username del destinatario 
+    a su respectivo ID internamente mediante una subconsulta.
+    """
+    conn = conectar()
+    try:
+        # Usamos una subconsulta: (SELECT id FROM usuarios WHERE nombre = ?)
+        cursor = conn.execute('''
+            INSERT INTO mensajes (remitente_id, destinatario_id, asunto, contenido)
+            VALUES (
+                ?, 
+                (SELECT id FROM usuarios WHERE nombre = ?), 
+                ?, 
+                ?
+            )
+        ''', (remitente_id, destinatario_username, asunto, contenido))
+        conn.commit()
+        
+        # Si el username no existía, la subconsulta devuelve NULL. 
+        # Como 'destinatario_id' es NOT NULL, SQLite lanzará un error capturado en el except.
+        return True
+    except Exception as e:
+        print(f"Error al crear mensaje (¿Usuario inexistente?): {e}")
+        return False
+    finally:
+        conn.close()
+
+def eliminar_mensaje(mensaje_id, usuario_id):
+    """
+    Elimina un mensaje garantizando que quien lo borra sea 
+    el remitente o el destinatario.
+    """
+    conn = conectar()
+    try:
+        cursor = conn.execute('''
+            DELETE FROM mensajes 
+            WHERE id = ? AND (remitente_id = ? OR destinatario_id = ?)
+        ''', (mensaje_id, usuario_id, usuario_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"Error al eliminar mensaje: {e}")
+        return False
+    finally:
+        conn.close()
+
+def obtener_mensajes_recibidos(usuario_id, orden_fecha='recientes'):
+    """
+    Trae los mensajes recibidos por el usuario.
+    orden_fecha puede ser 'recientes' (DESC) o 'antiguos' (ASC).
+    """
+    conn = conectar()
+    try:
+        # Validamos el orden para evitar inyección SQL directa en la palabra clave ORDER BY
+        direccion = "ASC" if orden_fecha == "antiguos" else "DESC"
+        
+        query = f"""
+            SELECT m.*, u.nombre AS nombre_remitente, u.nombre_completo AS nombre_real_remitente
+            FROM mensajes m
+            INNER JOIN usuarios u ON m.remitente_id = u.id
+            WHERE m.destinatario_id = ?
+            ORDER BY m.fecha {direccion}
+        """
+        return conn.execute(query, (usuario_id,)).fetchall()
+    except Exception as e:
+        print(f"Error al obtener recibidos: {e}")
+        return []
+    finally:
+        conn.close()
+
+def obtener_mensajes_enviados(usuario_id, orden_fecha='recientes'):
+    """
+    Trae los mensajes enviados por el usuario.
+    orden_fecha puede ser 'recientes' (DESC) o 'antiguos' (ASC).
+    """
+    conn = conectar()
+    try:
+        direccion = "ASC" if orden_fecha == "antiguos" else "DESC"
+        
+        query = f"""
+            SELECT m.*, u.nombre AS nombre_destinatario, u.nombre_completo AS nombre_real_destinatario
+            FROM mensajes m
+            INNER JOIN usuarios u ON m.destinatario_id = u.id
+            WHERE m.remitente_id = ?
+            ORDER BY m.fecha {direccion}
+        """
+        return conn.execute(query, (usuario_id,)).fetchall()
+    except Exception as e:
+        print(f"Error al obtener enviados: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+
+def marcar_mensaje_leido(mensaje_id, usuario_id):
+    """
+    Cambia el estado del mensaje a leído (1).
+    Asegura que solo el destinatario real pueda marcarlo como leído.
+    """
+    conn = conectar()
+    try:
+        cursor = conn.execute('''
+            UPDATE mensajes 
+            SET leido = 1 
+            WHERE id = ? AND destinatario_id = ?
+        ''', (mensaje_id, usuario_id))
+        conn.commit()
+        return cursor.rowcount > 0  # Retorna True si modificó el mensaje
+    except Exception as e:
+        print(f"Error al marcar como leído: {e}")
+        return False
+    finally:
+        conn.close()
+
+def contar_mensajes_no_leidos(usuario_id):
+    """
+    Cuenta cuántos mensajes recibidos tiene el usuario 
+    que aún están marcados como no leídos (leido = 0).
+    """
+    conn = conectar()
+    try:
+        resultado = conn.execute('''
+            SELECT COUNT(*) FROM mensajes 
+            WHERE destinatario_id = ? AND leido = 0
+        ''', (usuario_id,)).fetchone()
+        return resultado[0] if resultado else 0
+    except Exception as e:
+        print(f"Error al contar mensajes no leídos: {e}")
+        return 0
+    finally:
+        conn.close()
+
+def obtener_mensaje_por_id(mensaje_id, usuario_id):
+    """
+    Obtiene un mensaje específico por su ID.
+    Por seguridad, exige el usuario_id para comprobar que quien consulta
+    sea el remitente o el destinatario del mensaje.
+    """
+    conn = conectar()
+    try:
+        query = """
+            SELECT m.*, 
+                   u1.nombre AS nombre_remitente, u1.nombre_completo AS nombre_real_remitente,
+                   u2.nombre AS nombre_destinatario, u2.nombre_completo AS nombre_real_destinatario
+            FROM mensajes m
+            INNER JOIN usuarios u1 ON m.remitente_id = u1.id
+            INNER JOIN usuarios u2 ON m.destinatario_id = u2.id
+            WHERE m.id = ? AND (m.remitente_id = ? OR m.destinatario_id = ?)
+        """
+        resultado = conn.execute(query, (mensaje_id, usuario_id, usuario_id)).fetchone()
+        return dict(resultado) if resultado else None
+    except Exception as e:
+        print(f"Error al obtener el mensaje: {e}")
+        return None
     finally:
         conn.close()

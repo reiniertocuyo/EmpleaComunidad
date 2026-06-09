@@ -607,6 +607,80 @@ def restablecer_password(token):
     return render_template('restablecer_password.html', token=token)
 
 
+
+
+
+
+
+
+# ==========================================
+#         CONTROLADOR DE MENSAJERÍA
+# ==========================================
+
+@app.route('/mensajes')
+@app.route('/mensajes/<filtro>')
+def bandeja_mensajes(filtro='recibidos'):
+    """Muestra la bandeja de entrada o salida con opción de ordenamiento."""
+    usuario_id = session.get('user_id')
+    orden = request.args.get('orden', 'recientes') # 'recientes' o 'antiguos'
+    
+    if filtro == 'enviados':
+        lista_mensajes = db_manager.obtener_mensajes_enviados(usuario_id, orden)
+    else:
+        lista_mensajes = db_manager.obtener_mensajes_recibidos(usuario_id, orden)
+        
+    no_leidos = db_manager.contar_mensajes_no_leidos(usuario_id)
+    return render_template('bandeja.html', mensajes=lista_mensajes, filtro=filtro, no_leidos=no_leidos, orden_actual=orden)
+
+@app.route('/mensajes/redactar', methods=['GET', 'POST'])
+def redactar_mensaje():
+    usuario_id = session.get('user_id') # El remitente sí lo conocemos por la sesión
+    
+    if request.method == 'POST':
+        # Capturamos el texto plano que escribió el usuario (ej: "empresa_patito")
+        destinatario_username = request.form.get('destinatario').strip()
+        asunto = request.form.get('asunto')
+        contenido = request.form.get('contenido')
+        
+        # Pasamos directamente el username al modelo
+        if db_manager.crear_mensaje(usuario_id, destinatario_username, asunto, contenido):
+            return redirect(url_for('bandeja_mensajes', filtro='enviados'))
+        
+        # Si falla, es porque el '@username' no existe en el sistema
+        return "Error: El usuario destinatario no existe o el mensaje no pudo enviarse.", 404
+        
+    pre_destinatario = request.args.get('para', '')
+    return render_template('redactar.html', pre_destinatario=pre_destinatario)
+
+@app.route('/mensajes/leer/<int:mensaje_id>')
+def leer_mensaje(mensaje_id):
+    """Muestra el cuerpo de un mensaje y lo marca como leído si corresponde."""
+    usuario_id = session.get('user_id')
+    mensaje = db_manager.obtener_mensaje_por_id(mensaje_id, usuario_id)
+    
+    if not mensaje:
+        return "Mensaje no encontrado o no tienes permisos para verlo.", 403
+        
+    # Si eres el receptor y está sin leer, lo marcamos como leído
+    if mensaje['destinatario_id'] == usuario_id and mensaje['leido'] == 0:
+        db_manager.marcar_mensaje_leido(mensaje_id, usuario_id)
+        
+    return render_template('leer.html', m=mensaje)
+
+@app.route('/mensajes/eliminar/<int:mensaje_id>', methods=['POST'])
+def ruta_eliminar_mensaje(mensaje_id):
+    """Elimina el mensaje de las bandejas."""
+    usuario_id = session.get('user_id')
+    if db_manager.eliminar_mensaje(mensaje_id, usuario_id):
+        return redirect(url_for('bandeja_mensajes'))
+    return "No se pudo eliminar el mensaje.", 400
+
+
+
+
+
+
+
 if __name__ == '__main__':
     db_manager.inicializar_db()
     app.run(host='0.0.0.0', port=5000, debug=True)

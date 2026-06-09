@@ -54,11 +54,10 @@
 
                 <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                     
-                    <a href="/@{{ v.empresa_username }}" style="text-decoration: none; border: 1px solid #cbd5e0; color: #4a5568; font-weight: bold; padding: 7px 14px; border-radius: 5px; font-size: 0.85em; background-color: white;">
+                    <button type="button" onclick="window.location.href='/@{{ v.empresa_username }}'" style="background-color: white; border: 1px solid #cbd5e0; color: #4a5568; font-weight: bold; padding: 7px 14px; border-radius: 5px; font-size: 0.85em; cursor: pointer;">
                         🏢 Ver Empresa
-                    </a>
-
-                    <button type="button" onclick="alert('Funcionalidad de mensajería en desarrollo. Próximamente podrás chatear directamente con esta corporación.')" style="background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; padding: 7px 14px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+                    </button>
+                    <button type="button" onclick="window.location.href='{{ url_for('redactar_mensaje', para=v.empresa_username) }}'" style="background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; padding: 7px 14px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
                         📞 Contactar
                     </button>
 

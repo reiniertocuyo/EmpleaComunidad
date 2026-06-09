@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+<div style="max-width: 700px; margin: 20px auto; font-family: sans-serif; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+    <a href="{{ url_for('bandeja_mensajes') }}" style="display: inline-block; margin-bottom: 20px;"><- Volver a la bandeja</a>
+    
+    <h2 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0;">{{ m.asunto }}</h2>
+    
+    <div style="margin-bottom: 20px; font-size: 0.9em; color: #555;">
+        <p style="margin: 2px 0;"><strong>De:</strong> {{ m.nombre_real_remitente or m.nombre_remitente }}</p>
+        <p style="margin: 2px 0;"><strong>Para:</strong> {{ m.nombre_real_destinatario or m.nombre_destinatario }}</p>
+        <p style="margin: 2px 0;"><strong>Fecha:</strong> {{ m.fecha }}</p>
+    </div>
+
+    <div style="background: #fdfdfd; padding: 15px; border: 1px solid #f0f0f0; border-radius: 4px; white-space: pre-line; line-height: 1.6; min-height: 150px;">
+        {{ m.contenido }}
+    </div>
+
+    <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+        <a href="{{ url_for('redactar_mensaje', para=m.nombre_remitente) }}" style="background: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; font-size: 0.9em;">Responder</a>
+    </div>
+</div>
+{% endblock %}

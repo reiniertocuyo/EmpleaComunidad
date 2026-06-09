@@ -28,6 +28,8 @@
                     <a href="{{ url_for('lista_postulantes_empresa') }}" class="btn-nav">Postulantes</a> {# Ruta en desarrollo #}
                 {% endif %}
                 
+                <a href="{{ url_for('bandeja_mensajes') }}" class="btn-nav">Mensajes</a>
+                
                 {# === BOTÓN DE PERFIL CIRCULAR (COMPARTIDO) === #}
                 <a href="{{ url_for('dashboard') }}" class="enlace-perfil-nav" title="Ir al Dashboard">
                     {% if usuario_actual['foto'] %}
