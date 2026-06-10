@@ -66,14 +66,16 @@ def procesar_subida_cv(archivo_formulario, usuario_id):
     return None
 
 
-
+# === CONFIGURACIÓN SEGURA DE CORREO ===
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = ''          # <--- Tu correo real de Gmail
-app.config['MAIL_PASSWORD'] = '' # <--- Código de 16 letras de Google
-app.config['MAIL_DEFAULT_SENDER'] = ('Bolsa de Empleo', '')# <--- Tu correo real de Gmail otravez
+
+# Ahora Flask buscará estos datos de forma secreta en el sistema operativo
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
+app.config['MAIL_DEFAULT_SENDER'] = ('Bolsa de Empleo', os.environ.get('MAIL_USERNAME'))
 
 mail = Mail(app)
 from mail_helper import enviar_correo_aceptacion, enviar_correo_recuperacion
@@ -234,7 +236,8 @@ def editar_perfil():
             'fecha_nacimiento': request.form.get('fecha_nacimiento'),
             'foto': nombre_archivo_foto,
             'estatus': request.form.get('estatus') if usuario['tipo'] == 'persona' else None,
-            'cv_ruta': nombre_archivo_cv if usuario['tipo'] == 'persona' else None
+            'cv_ruta': nombre_archivo_cv if usuario['tipo'] == 'persona' else None,
+            'nombre_administrador': request.form.get('nombre_administrador') if usuario['tipo'] == 'empresa' else None
         }
         
         if db_manager.actualizar_perfil(usuario['id'], datos):

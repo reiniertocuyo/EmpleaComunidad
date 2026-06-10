@@ -14,9 +14,18 @@
             <p style="color: #4A5568; font-weight: 600; font-size: 1.1em; margin: -25px 0 5px 0;"> @{{ u.nombre }} </p>
             <p style="color: #718096; margin: 0; font-weight: bold;">Cuenta de Empresa</p>
             
+
+            {% if u.nombre_administrador %}
+                <p style="color: #4a5568; font-size: 0.9em; margin: 5px 0;">
+                    👤 <strong>Administrador/a:</strong> {{ u.nombre_administrador }}
+                </p>
+            {% endif %}
+
+
             <p style="margin: 5px 0 0 0; background-color: #ebf8ff; color: #2b6cb0; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 0.9em;">
                 📊 <strong>Tasa de Contratación:</strong> {{ tasa_contratacion | default('0.0') }}%
             </p>
+
         </div>
     </div>
 

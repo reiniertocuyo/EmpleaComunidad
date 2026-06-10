@@ -141,7 +141,8 @@ def actualizar_perfil(usuario_id, datos):
                 fecha_nacimiento = ?,
                 foto = COALESCE(?, foto),
                 estatus = COALESCE(?, estatus),
-                cv_ruta = COALESCE(?, cv_ruta)
+                cv_ruta = COALESCE(?, cv_ruta),
+                nombre_administrador = COALESCE(?, nombre_administrador)
             WHERE id = ?
         ''', (
             datos['nombre_completo'], 
@@ -151,6 +152,7 @@ def actualizar_perfil(usuario_id, datos):
             datos.get('foto'),
             datos.get('estatus'),
             datos.get('cv_ruta'),
+            datos.get('nombre_administrador'),
             usuario_id
         ))
         conn.commit()

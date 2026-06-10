@@ -25,17 +25,17 @@ def enviar_correo_aceptacion(email_destino, nombre_usuario, nombre_vacante, nomb
         print(f"Error al enviar correo de vacante: {e}")
         return False
 
-# Función 2: Enviar correo de recuperación de contraseña
+# Modifica la Función 2 en mail_helper.py para que quede así:
 def enviar_correo_recuperacion(email_destino, id_usuario):
-    # Importamos 'app' y 'mail' aquí adentro de forma segura
     from app import app, mail 
+    import os  # <-- Importamos os para leer la URL de Render
     try:
-        # Usamos la secret_key de tu app para firmar el token seguro
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         token = serializer.dumps(id_usuario, salt='recuperar-password-salt')
         
-        # Enlace funcional para entorno local
-        enlace_recuperacion = f"http://127.0.0.1:5000/restablecer-password/{token}"
+        # Si la app está en Render usará la URL real; si estás en tu PC usará localhost
+        dominio_app = os.environ.get('APP_URL', 'http://127.0.0.1:5000')
+        enlace_recuperacion = f"{dominio_app}/restablecer-password/{token}"
         
         msg = Message(
             subject="Recuperación de contraseña - Bolsa de Empleo",
