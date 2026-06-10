@@ -69,8 +69,8 @@ def procesar_subida_cv(archivo_formulario, usuario_id):
 # === CONFIGURACIÓN SEGURA DE CORREO ===
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 
 # Ahora Flask buscará estos datos de forma secreta en el sistema operativo
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
