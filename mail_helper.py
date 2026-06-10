@@ -52,3 +52,33 @@ def enviar_correo_recuperacion(email_destino, id_usuario):
     except Exception as e:
         print(f"Error al enviar correo de recuperación: {e}")
         return False
+
+
+# Función 3: Enviar correo de notificación de nuevo mensaje interno
+def enviar_correo_nuevo_mensaje(email_destino, nombre_remitente, asunto_mensaje, contenido_mensaje):
+    from app import app, mail 
+    import os
+    try:
+        # Obtenemos la URL para el botón de "Iniciar sesión"
+        dominio_app = os.environ.get('APP_URL', 'http://127.0.0.1:5000')
+        enlace_login = f"{dominio_app}/login"
+        
+        msg = Message(
+            subject=f"Tienes un nuevo mensaje interno de: {nombre_remitente}",
+            recipients=[email_destino]
+        )
+        
+        # Renderizamos una nueva plantilla HTML para este correo
+        msg.html = render_template(
+            'email_nuevo_mensaje.html', 
+            remitente=nombre_remitente, 
+            asunto=asunto_mensaje, 
+            contenido=contenido_mensaje,
+            enlace=enlace_login
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo de notificación de mensaje: {e}")
+        return False

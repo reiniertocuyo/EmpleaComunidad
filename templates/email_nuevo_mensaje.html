@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .boton {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white !important;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h2>¡Hola! Tienes un nuevo mensaje en la plataforma</h2>
+    <p><strong>De:</strong> {{ remitente }}</p>
+    <p><strong>Asunto:</strong> {{ asunto }}</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;">
+        <p><strong>Contenido:</strong></p>
+        <p>{{ contenido }}</p>
+    </div>
+
+    <p>Para leer el hilo completo o responder a este mensaje, haz clic en el siguiente enlace:</p>
+    <a href="{{ enlace }}" class="boton">Iniciar sesión para responder</a>
+</body>
+</html>

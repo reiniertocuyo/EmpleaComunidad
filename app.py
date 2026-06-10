@@ -78,7 +78,7 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = ('Bolsa de Empleo', os.environ.get('MAIL_USERNAME'))
 
 mail = Mail(app)
-from mail_helper import enviar_correo_aceptacion, enviar_correo_recuperacion
+from mail_helper import enviar_correo_aceptacion, enviar_correo_recuperacion, enviar_correo_nuevo_mensaje
 
 
 @app.before_request
@@ -637,23 +637,40 @@ def bandeja_mensajes(filtro='recibidos'):
 
 @app.route('/mensajes/redactar', methods=['GET', 'POST'])
 def redactar_mensaje():
-    usuario_id = session.get('user_id') # El remitente sí lo conocemos por la sesión
+    usuario_id = session.get('user_id') 
     
     if request.method == 'POST':
-        # Capturamos el texto plano que escribió el usuario (ej: "empresa_patito")
         destinatario_username = request.form.get('destinatario').strip()
         asunto = request.form.get('asunto')
         contenido = request.form.get('contenido')
         
-        # Pasamos directamente el username al modelo
+        # 1. Intentamos guardar el mensaje en la BD interna
         if db_manager.crear_mensaje(usuario_id, destinatario_username, asunto, contenido):
+            
+            # === NUEVO DISPARADOR DE GMAIL ===
+            # 2. Buscamos los datos del destinatario para obtener su correo real
+            info_destinatario = db_manager.obtener_usuario_por_username(destinatario_username)
+            
+            if info_destinatario and info_destinatario['email']:
+                # Enviamos el correo usando el nombre guardado en la sesión de quien escribe
+                nombre_remitente = session.get('user_nombre', 'Un usuario')
+                
+                enviar_correo_nuevo_mensaje(
+                    email_destino=info_destinatario['email'],
+                    nombre_remitente=nombre_remitente,
+                    asunto_mensaje=asunto,
+                    contenido_mensaje=contenido
+                )
+            # ==================================
+            
             return redirect(url_for('bandeja_mensajes', filtro='enviados'))
         
-        # Si falla, es porque el '@username' no existe en el sistema
         return "Error: El usuario destinatario no existe o el mensaje no pudo enviarse.", 404
         
     pre_destinatario = request.args.get('para', '')
     return render_template('redactar.html', pre_destinatario=pre_destinatario)
+
+
 
 @app.route('/mensajes/leer/<int:mensaje_id>')
 def leer_mensaje(mensaje_id):
