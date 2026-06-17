@@ -3,11 +3,22 @@ from flask import render_template, current_app
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer
 
+def _obtener_mail_instancia():
+    """Función auxiliar interna para recuperar la extensión de correo de forma segura."""
+    try:
+        return current_app.extensions['mail']
+    except RuntimeError:
+        # Si ocurre un RuntimeError es porque estamos en un hilo secundario sin contexto explícito.
+        # En ese caso, requerimos que la app o la extensión se manejen mediante el 'with app_context' que configuramos en app.py
+        raise RuntimeError(
+            "No se pudo acceder al contexto de Flask. "
+            "Asegúrate de envolver esta llamada en 'with app.app_context():' si estás usando hilos."
+        )
+
 # Función 1: Enviar correo de aceptación de vacante
 def enviar_correo_aceptacion(email_destino, nombre_usuario, nombre_vacante, nombre_empresa):
-    # Obtenemos la instancia de mail registrada en las extensiones de la app activa
-    mail = current_app.extensions['mail']
     try:
+        mail = _obtener_mail_instancia()
         msg = Message(
             subject=f"¡Felicidades! Has sido aceptado en la vacante: {nombre_vacante}",
             recipients=[email_destino]
@@ -29,8 +40,8 @@ def enviar_correo_aceptacion(email_destino, nombre_usuario, nombre_vacante, nomb
 
 # Función 2: Enviar correo de recuperación de contraseña
 def enviar_correo_recuperacion(email_destino, id_usuario):
-    mail = current_app.extensions['mail']
     try:
+        mail = _obtener_mail_instancia()
         # Usamos el SECRET_KEY desde la configuración de la app activa
         serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         token = serializer.dumps(id_usuario, salt='recuperar-password-salt')
@@ -58,8 +69,8 @@ def enviar_correo_recuperacion(email_destino, id_usuario):
 
 # Función 3: Enviar correo de notificación de nuevo mensaje interno
 def enviar_correo_nuevo_mensaje(email_destino, nombre_remitente, asunto_mensaje, contenido_mensaje):
-    mail = current_app.extensions['mail']
     try:
+        mail = _obtener_mail_instancia()
         # Obtenemos la URL para el botón de "Iniciar sesión"
         dominio_app = os.environ.get('APP_URL', 'http://127.0.0.1:5000')
         enlace_login = f"{dominio_app}/login"

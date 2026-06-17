@@ -1,4 +1,5 @@
 import os
+import threading
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.utils import secure_filename
 from datetime import date
@@ -77,7 +78,7 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = ('Bolsa de Empleo', os.environ.get('MAIL_USERNAME'))
 
-app.config['MAIL_TIMEOUT'] = 2
+###app.config['MAIL_TIMEOUT'] = 10
 
 mail = Mail(app)
 from mail_helper import enviar_correo_aceptacion, enviar_correo_recuperacion, enviar_correo_nuevo_mensaje
@@ -484,16 +485,36 @@ def gestionar_postulacion(id, accion):
         if accion == 'aceptar':
             datos_postulacion = db_manager.obtener_detalle_postulacion(id)
             if datos_postulacion:
-                # Si el usuario no configuró su 'nombre_completo' usamos su 'username' por defecto
                 nombre_destino = datos_postulacion['nombre_usuario'] or "Postulante"
+                nombre_empresa = session.get('user_nombre', 'La Empresa')
                 
-                enviar_correo_aceptacion(
-                    email_destino=datos_postulacion['email'],
-                    nombre_usuario=nombre_destino,
-                    nombre_vacante=datos_postulacion['titulo_vacante'],
-                    nombre_empresa=session.get('user_nombre', 'La Empresa')
+                # Función interna para el hilo secundario
+                def enviar_correo_aceptacion_seguro(app_context, email, usuario, vacante, empresa):
+                    with app_context:
+                        try:
+                            enviar_correo_aceptacion(
+                                email_destino=email,
+                                nombre_usuario=usuario,
+                                nombre_vacante=vacante,
+                                nombre_empresa=empresa
+                            )
+                            print(" -> [EMAIL] Correo de aceptación enviado con éxito.")
+                        except Exception as e:
+                            print(f" -> [ALERTA CORREO] Falló el correo de aceptación, pero el estado en BD ya cambió. Error: {e}")
+
+                # Crear y arrancar el hilo en segundo plano
+                hilo_aceptacion = threading.Thread(
+                    target=enviar_correo_aceptacion_seguro,
+                    args=(
+                        app._get_current_object(),
+                        datos_postulacion['email'],
+                        nombre_destino,
+                        datos_postulacion['titulo_vacante'],
+                        nombre_empresa
+                    )
                 )
-        # ==================================================
+                hilo_aceptacion.start()
+                
         return jsonify({"mensaje": "Estado actualizado"}), 200
     return jsonify({"error": "No se pudo actualizar"}), 400
 
@@ -572,20 +593,36 @@ def lista_postulantes_empresa():
 
 
 
-# 1. Ruta que procesa el formulario de "Olvidé mi contraseña"
 @app.route('/olvide_password', methods=['GET', 'POST'])
 def olvide_password():
     if request.method == 'POST':
         email = request.form.get('email')
-        # Buscamos en tu db_manager si el usuario existe por su email
-        usuario = db_manager.obtener_usuario_por_email(email) # Asegúrate de tener esta función en tu DB
+        usuario = db_manager.obtener_usuario_por_email(email)
         
         if usuario:
-            enviar_correo_recuperacion(usuario['email'], usuario['id'])
+            # Función interna para el hilo secundario
+            def enviar_correo_recuperacion_seguro(app_context, email_destino, usuario_id):
+                with app_context:
+                    try:
+                        enviar_correo_recuperacion(email_destino, usuario_id)
+                        print(" -> [EMAIL] Correo de recuperación enviado con éxito.")
+                    except Exception as e:
+                        print(f" -> [ALERTA CORREO] Falló el correo de recuperación. Error: {e}")
+
+            # Crear y arrancar el hilo en segundo plano
+            hilo_recuperacion = threading.Thread(
+                target=enviar_correo_recuperacion_seguro,
+                args=(
+                    app._get_current_object(),
+                    usuario['email'],
+                    usuario['id']
+                )
+            )
+            hilo_recuperacion.start()
             
-        # Mensaje ambiguo por seguridad, para que no adivinen correos existentes
+        # Mensaje ambiguo por seguridad. El render_template ocurre INMEDIATAMENTE, sin esperar al correo.
         return render_template('login.html', mensaje="Si el correo es correcto, recibirás instrucciones en breve.")
-    return render_template('olvide_password.html') # Tu vista con un input para el email
+    return render_template('olvide_password.html')
 
 
 # 2. Ruta a la que llegará el usuario desde su celular al hacer clic en el correo
@@ -637,6 +674,8 @@ def bandeja_mensajes(filtro='recibidos'):
     no_leidos = db_manager.contar_mensajes_no_leidos(usuario_id)
     return render_template('bandeja.html', mensajes=lista_mensajes, filtro=filtro, no_leidos=no_leidos, orden_actual=orden)
 
+
+
 @app.route('/mensajes/redactar', methods=['GET', 'POST'])
 def redactar_mensaje():
     usuario_id = session.get('user_id') 
@@ -646,25 +685,46 @@ def redactar_mensaje():
         asunto = request.form.get('asunto')
         contenido = request.form.get('contenido')
         
-        # 1. Intentamos guardar el mensaje en la BD interna
+        # 1. Intentamos guardar el mensaje en la BD interna (SQLite)
         if db_manager.crear_mensaje(usuario_id, destinatario_username, asunto, contenido):
             
-            # === NUEVO DISPARADOR DE GMAIL ===
             # 2. Buscamos los datos del destinatario para obtener su correo real
             info_destinatario = db_manager.obtener_usuario_por_username(destinatario_username)
             
             if info_destinatario and info_destinatario['email']:
-                # Enviamos el correo usando el nombre guardado en la sesión de quien escribe
                 nombre_remitente = session.get('user_nombre', 'Un usuario')
                 
-                enviar_correo_nuevo_mensaje(
-                    email_destino=info_destinatario['email'],
-                    nombre_remitente=nombre_remitente,
-                    asunto_mensaje=asunto,
-                    contenido_mensaje=contenido
+                # === FUNCIÓN INTERNA SEGUIDORA PARA EL HILO ===
+                def enviar_correo_seguro(app_context, email_destino, nombre_remitente, asunto_mensaje, contenido_mensaje):
+                    # Flask-Mail necesita el contexto de la app para conocer las credenciales SMTP
+                    with app_context:
+                        try:
+                            enviar_correo_nuevo_mensaje(
+                                email_destino=email_destino,
+                                nombre_remitente=nombre_remitente,
+                                asunto_mensaje=asunto_mensaje,
+                                contenido_mensaje=contenido_mensaje
+                            )
+                            print(" -> [EMAIL] Notificación enviada con éxito.")
+                        except Exception as e:
+                            # Si el correo falla, lo capturamos aquí. SQLite NI SE ENTERA.
+                            print(f" -> [ALERTA CORREO FALLE] No se envió la notificación, pero el mensaje local sí se guardó. Error: {e}")
+
+                # === ROMPER DEPENDENCIA MEDIANTE THREADING ===
+                # Pasamos app._get_current_object() para darle acceso seguro al contexto de Flask al hilo secundario
+                hilo_correo = threading.Thread(
+                    target=enviar_correo_seguro,
+                    args=(
+                        app._get_current_object(),
+                        info_destinatario['email'],
+                        nombre_remitente,
+                        asunto,
+                        contenido
+                    )
                 )
-            # ==================================
+                hilo_correo.start() # Arranca en segundo plano y libera el flujo principal de inmediato
             
+            # El usuario local es redirigido inmediatamente pase lo que pase con el correo electrónico
             return redirect(url_for('bandeja_mensajes', filtro='enviados'))
         
         return "Error: El usuario destinatario no existe o el mensaje no pudo enviarse.", 404
