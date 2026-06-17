@@ -68,14 +68,16 @@ def procesar_subida_cv(archivo_formulario, usuario_id):
 
 # === CONFIGURACIÓN SEGURA DE CORREO ===
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_PORT'] = 587             # <-- CAMBIADO A 587
+app.config['MAIL_USE_TLS'] = True         # <-- CAMBIADO A TRUE
+app.config['MAIL_USE_SSL'] = False        # <-- CAMBIADO A FALSE
 
 # Ahora Flask buscará estos datos de forma secreta en el sistema operativo
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = ('Bolsa de Empleo', os.environ.get('MAIL_USERNAME'))
+
+app.config['MAIL_TIMEOUT'] = 2
 
 mail = Mail(app)
 from mail_helper import enviar_correo_aceptacion, enviar_correo_recuperacion, enviar_correo_nuevo_mensaje
