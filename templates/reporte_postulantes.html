@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Postulantes</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #2d3748;
+            line-height: 1.5;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 18px;
+            color: #2b6cb0;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .seccion-vacia {
+            color: #a0aec0;
+            font-style: italic;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            text-align: left;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 2px solid #cbd5e0;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .badge-aceptado { background-color: #c6f6d5; color: #22543d; }
+        .badge-pendiente { background-color: #feebc8; color: #c05621; }
+        .badge-rechazado { background-color: #fed7d7; color: #9b2c2c; }
+    </style>
+</head>
+<body>
+
+    <h1>📋 Reporte Global de Candidatos</h1>
+    <p class="subtitle">Comunidad de Evaluación - Resumen de solicitudes activas e históricos.</p>
+
+    {% set tracking = namespace(tiene_aceptados=false, tiene_pendientes=false, tiene_rechazados=false) %}
+
+    <h2>✅ Candidatos Contratados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40%;">Nombre Completo</th>
+                <th style="width: 40%;">Puesto Solicitado</th>
+                <th style="width: 20%;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vacantes %}
+                {% for p in v.postulados %}
+                    {% if p.estado_postulacion == 'Aceptado' %}
+                        {% set tracking.tiene_aceptados = true %}
+                        <tr>
+                            <td><strong>{{ p.nombre_completo or p.nombre }}</strong></td>
+                            <td>{{ v.titulo }}</td>
+                            <td><span class="badge badge-aceptado">Contratado</span></td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not tracking.tiene_aceptados %}
+        <p class="seccion-vacia">No se registran candidatos contratados hasta la fecha.</p>
+    {% endif %}
+
+
+    <h2>⏳ Pendientes por Evaluar</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40%;">Nombre Completo</th>
+                <th style="width: 40%;">Puesto Solicitado</th>
+                <th style="width: 20%;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vacantes %}
+                {% for p in v.postulados %}
+                    {% if p.estado_postulacion == 'Pendiente' or not p.estado_postulacion %}
+                        {% set tracking.tiene_pendientes = true %}
+                        <tr>
+                            <td><strong>{{ p.nombre_completo or p.nombre }}</strong></td>
+                            <td>{{ v.titulo }}</td>
+                            <td><span class="badge badge-pendiente">Pendiente</span></td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not tracking.tiene_pendientes %}
+        <p class="seccion-vacia">No hay candidatos pendientes de evaluación.</p>
+    {% endif %}
+
+
+    <h2>❌ Candidatos No Seleccionados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40%;">Nombre Completo</th>
+                <th style="width: 40%;">Puesto Solicitado</th>
+                <th style="width: 20%;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vacantes %}
+                {% for p in v.postulados %}
+                    {% if p.estado_postulacion == 'Rechazado' %}
+                        {% set tracking.tiene_rechazados = true %}
+                        <tr>
+                            <td><strong>{{ p.nombre_completo or p.nombre }}</strong></td>
+                            <td>{{ v.titulo }}</td>
+                            <td><span class="badge badge-rechazado">No seleccionado</span></td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not tracking.tiene_rechazados %}
+        <p class="seccion-vacia">No se registran candidatos descartados.</p>
+    {% endif %}
+
+</body>
+</html>

@@ -1,10 +1,16 @@
 import os
 import threading
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from werkzeug.utils import secure_filename
 from datetime import date
-from flask_mail import Mail # <--- ¡PRIMERO IMPORTAMOS LA HERRAMIENTA MAIL!
+
+# Librerías de terceros (Flask y extensiones)
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, make_response
+from flask_mail import Mail
+from werkzeug.utils import secure_filename
+from weasyprint import HTML  # <--- Importación necesaria para el PDF
+
+# Módulos propios de la aplicación
 import db_manager
+
 
 app = Flask(__name__)
 app.secret_key = 'clave_para_firmar_cookies'
@@ -571,16 +577,17 @@ def ofertas_trabajo():
 
 
 # --- RUTA: Postulantes globales de la empresa ---
+from flask import make_response
+from weasyprint import HTML
+
 @app.route('/empresa/postulantes', methods=['GET'])
 def lista_postulantes_empresa():
     token = session.get('user_token')
     usuario = db_manager.obtener_usuario_por_token(token)
     
-    # Validación limpia e idéntica utilizando el campo 'tipo' de la BD
     if not usuario or usuario['tipo'] != 'empresa':
         return redirect(url_for('index'))
     
-    # Estructuramos el árbol de vacantes con sus postulados correspondientes
     mis_vacantes = db_manager.obtener_mis_solicitudes(usuario['id'])
     vacantes_con_postulados = []
     for v in mis_vacantes:
@@ -591,6 +598,33 @@ def lista_postulantes_empresa():
     return render_template('postulantes.html', u=usuario, vacantes=vacantes_con_postulados)
 
 
+@app.route('/empresa/postulantes/pdf', methods=['GET'])
+def generar_reporte_pdf():
+    token = session.get('user_token')
+    usuario = db_manager.obtener_usuario_por_token(token)
+    
+    if not usuario or usuario['tipo'] != 'empresa':
+        return redirect(url_for('index'))
+    
+    mis_vacantes = db_manager.obtener_mis_solicitudes(usuario['id'])
+    vacantes_con_postulados = []
+    for v in mis_vacantes:
+        vacante_dict = dict(v)
+        vacante_dict['postulados'] = db_manager.obtener_postulados_por_vacante(v['id'])
+        vacantes_con_postulados.append(vacante_dict)
+        
+    # 1. Carga los datos en la plantilla HTML del reporte
+    html_renderizado = render_template('reporte_postulantes.html', u=usuario, vacantes=vacantes_con_postulados)
+    
+    # 2. Convierte ese HTML a PDF binario
+    pdf = HTML(string=html_renderizado).write_pdf()
+    
+    # 3. Lo envía al navegador como una descarga directa
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=reporte_postulantes.pdf'
+    
+    return response
 
 
 @app.route('/olvide_password', methods=['GET', 'POST'])

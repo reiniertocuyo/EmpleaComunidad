@@ -3,7 +3,13 @@
 
 <div style="max-width: 900px; margin: 0 auto;">
     <h2>👤 Centro de Evaluación de Candidatos</h2>
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('generar_reporte_pdf') }}" target="_blank" style="background-color: #4a5568; color: white; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+            📥 Descargar Reporte PDF
+        </a>
+    </div>
     <p style="color: #718096; margin-bottom: 25px;">Revisa las carpetas, descarga los currículums y gestiona el ingreso de los nuevos integrantes a la comunidad.</p>
+
 
     <div style="display: flex; flex-direction: column; gap: 15px;">
         {% set tracking_postulantes = namespace(tiene_postulados=false) %}
