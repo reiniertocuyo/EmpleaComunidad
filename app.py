@@ -647,7 +647,9 @@ def olvide_password():
             hilo_recuperacion = threading.Thread(
                 target=enviar_correo_recuperacion_seguro,
                 args=(
-                    app._get_current_object(),
+                    #app._get_current_object(),
+                    #app.app_context(),
+                    app.test_request_context(),
                     usuario['email'],
                     usuario['id']
                 )
