@@ -751,7 +751,8 @@ def redactar_mensaje():
                 hilo_correo = threading.Thread(
                     target=enviar_correo_seguro,
                     args=(
-                        app._get_current_object(),
+                        #app._get_current_object(),
+                        app.test_request_context(),
                         info_destinatario['email'],
                         nombre_remitente,
                         asunto,
